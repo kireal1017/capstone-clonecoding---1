@@ -3,6 +3,7 @@ import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useToast } from '@/components/ui/Toast';
+import EmptyState from '@/components/ui/EmptyState';
 import { usePlans } from '@/features/plans/hooks/usePlans';
 import { useCategories } from '@/features/categories/hooks/useCategories';
 import { useDeleteCategory } from '@/features/categories/hooks/useDeleteCategory';
@@ -75,9 +76,10 @@ function CategoryList() {
           </Button>
         </div>
       ) : (categories ?? []).length === 0 ? (
-        <p className="rounded-card border border-soft-border bg-white px-4 py-6 text-center text-sm text-outline">
-          등록된 카테고리가 없습니다. 추가 버튼으로 만들어보세요.
-        </p>
+        <EmptyState
+          message="등록된 카테고리가 없습니다."
+          description="+ 카테고리 추가 버튼으로 추가해보세요."
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {(categories ?? []).map((category) => (

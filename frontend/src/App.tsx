@@ -4,6 +4,7 @@ import { queryClient } from '@/lib/queryClient';
 import { router } from '@/routes';
 import { ToastProvider } from '@/components/ui/Toast';
 import Spinner from '@/components/ui/Spinner';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { useAuthBootstrap } from '@/features/auth/hooks/useAuthBootstrap';
 
 /**
@@ -30,11 +31,13 @@ function AuthBootstrapGate() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthBootstrapGate />
-      </ToastProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthBootstrapGate />
+        </ToastProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

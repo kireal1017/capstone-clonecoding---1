@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import PlanCard from '@/features/plans/components/PlanCard';
+import EmptyState from '@/components/ui/EmptyState';
 import { usePlanStore } from '@/features/plans/stores/planStore';
 import { selectWeeklyPlans } from '@/features/plans/hooks/usePlans';
 import { getIsoWeekDates, getWeekdayIndex } from '@/lib/date/kst';
@@ -77,9 +78,7 @@ function WeeklyPlanBar({ plans, todayKst, onSelectPlan }: WeeklyPlanBarProps) {
       {selectedWeekday !== null ? (
         <div className="flex flex-col gap-2">
           {selectedPlans.length === 0 ? (
-            <p className="rounded-card border border-soft-border bg-white px-4 py-4 text-center text-xs text-outline">
-              이 날 등록된 일정이 없습니다.
-            </p>
+            <EmptyState message="이 날 등록된 일정이 없습니다." className="py-4" />
           ) : (
             <ul className="flex flex-col gap-2">
               {selectedPlans.map((plan) => (

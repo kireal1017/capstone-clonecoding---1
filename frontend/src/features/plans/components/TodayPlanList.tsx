@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PlanCard from '@/features/plans/components/PlanCard';
+import EmptyState from '@/components/ui/EmptyState';
 import { useCompletePlan } from '@/features/plans/hooks/useCompletePlan';
 import { useToast } from '@/components/ui/Toast';
 import type { Plan } from '@/types/domain';
@@ -42,10 +43,10 @@ function TodayPlanList({ plans, todayKst, onSelectPlan }: TodayPlanListProps) {
 
   if (plans.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-1 rounded-card border border-soft-border bg-white px-4 py-8 text-center">
-        <p className="text-sm text-on-surface">오늘 처리할 일정이 없습니다.</p>
-        <p className="text-xs text-outline">오른쪽 하단 + 버튼으로 일정을 추가해보세요.</p>
-      </div>
+      <EmptyState
+        message="오늘 처리할 일정이 없습니다."
+        description="오른쪽 하단 + 버튼으로 일정을 추가해보세요."
+      />
     );
   }
 

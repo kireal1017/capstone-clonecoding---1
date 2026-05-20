@@ -1,0 +1,61 @@
+- generic [ref=e5]:
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "PlanMate" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e9]:
+        - link "오늘의 일정" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - link "프로필" [ref=e11] [cursor=pointer]:
+          - /url: /profile
+        - button "로그아웃" [ref=e12] [cursor=pointer]
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]: 🔍
+          - searchbox "일정 검색" [active] [ref=e18]: 존재하지않는키워드
+          - button "검색어 지우기" [ref=e256] [cursor=pointer]: ×
+        - generic "일정 필터" [ref=e19]:
+          - button "미팅" [ref=e20] [cursor=pointer]: 미팅
+          - button "과제" [ref=e22] [cursor=pointer]: 과제
+          - button "개인 일정" [ref=e24] [cursor=pointer]: 개인 일정
+          - button "약속" [ref=e26] [cursor=pointer]: 약속
+          - button "독서" [ref=e28] [cursor=pointer]: 독서
+          - button "미분류" [ref=e30] [cursor=pointer]: 미분류
+          - button "높음" [ref=e32] [cursor=pointer]
+          - button "보통" [ref=e33] [cursor=pointer]
+          - button "낮음" [ref=e34] [cursor=pointer]
+          - button "미완료만" [ref=e35] [cursor=pointer]
+      - region "검색 결과" [ref=e257]:
+        - heading "\"존재하지않는키워드\" 검색 결과 (0건)" [level=2] [ref=e269]
+        - generic [ref=e270]:
+          - paragraph [ref=e271]: 검색 결과가 없습니다.
+          - paragraph [ref=e272]: 다른 키워드로 검색해보세요.
+      - region "오늘 할 일 목록" [ref=e226]:
+        - generic [ref=e227]:
+          - heading "오늘 할 일" [level=2] [ref=e228]
+          - generic [ref=e229]: 2026.05.21
+        - list [ref=e230]:
+          - listitem [ref=e231]:
+            - button "데이터베이스 복습 완료 토글 데이터베이스 복습 미분류 보통 D-3" [ref=e232] [cursor=pointer]:
+              - checkbox "데이터베이스 복습 완료 토글" [ref=e234]
+              - generic [ref=e235]:
+                - paragraph [ref=e236]: 데이터베이스 복습
+                - generic [ref=e237]:
+                  - generic [ref=e238]: 미분류
+                  - generic [ref=e240]: 보통
+                  - generic [ref=e241]: D-3
+          - listitem [ref=e242]:
+            - button "팀 미팅 준비 완료 토글 팀 미팅 준비 미팅 🕐 14:00 낮음 2026.05.28" [ref=e243] [cursor=pointer]:
+              - checkbox "팀 미팅 준비 완료 토글" [ref=e245]
+              - generic [ref=e246]:
+                - paragraph [ref=e247]: 팀 미팅 준비
+                - generic [ref=e248]:
+                  - generic [ref=e249]: 미팅
+                  - generic [ref=e251]: 🕐 14:00
+                  - generic [ref=e252]: 낮음
+                  - generic [ref=e253]: 2026.05.28
+      - link "일정 추가" [ref=e254] [cursor=pointer]:
+        - /url: /tasks/new
+        - generic [ref=e255]: +
