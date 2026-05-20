@@ -10,11 +10,13 @@ import type { Plan } from '@/types/domain';
  */
 interface MonthlyCalendarProps {
   plans: Plan[];
+  /** 팝업 내 일정 클릭 시 상세 모달 오픈(?planId=). */
+  onSelectPlan?: (planId: number) => void;
 }
 
 const WEEKDAY_HEADERS = ['일', '월', '화', '수', '목', '금', '토'];
 
-function MonthlyCalendar({ plans }: MonthlyCalendarProps) {
+function MonthlyCalendar({ plans, onSelectPlan }: MonthlyCalendarProps) {
   const { monthLabel, cells, selectedDate, setSelectedDate, goPrevMonth, goNextMonth } =
     useCalendar(plans);
 
@@ -49,6 +51,14 @@ function MonthlyCalendar({ plans }: MonthlyCalendarProps) {
                 date={cell.date}
                 plans={cell.plans}
                 onClose={() => setSelectedDate(null)}
+                {...(onSelectPlan
+                  ? {
+                      onSelectPlan: (planId: number) => {
+                        setSelectedDate(null);
+                        onSelectPlan(planId);
+                      },
+                    }
+                  : {})}
               />
             ) : null}
           </div>

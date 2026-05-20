@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import MonthlyCalendar from '@/features/calendar/components/MonthlyCalendar';
 import WeeklyPlanBar from '@/features/plans/components/WeeklyPlanBar';
 import TodayPlanList from '@/features/plans/components/TodayPlanList';
 import CreatePlanFAB from '@/features/plans/components/CreatePlanFAB';
+import PlanDetailModal from '@/features/plans/components/PlanDetailModal';
 import { usePlans, selectTodayPlans } from '@/features/plans/hooks/usePlans';
 import { getTodayKst } from '@/lib/date/kst';
 
@@ -22,6 +24,38 @@ import { getTodayKst } from '@/lib/date/kst';
 function MainPage() {
   const todayKst = useMemo(() => getTodayKst(), []);
   const { data, isLoading, isError, error, refetch, isFetching } = usePlans();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const planIdParam = searchParams.get('planId');
+  const parsedPlanId = planIdParam !== null ? Number(planIdParam) : null;
+  const openPlanId =
+    parsedPlanId !== null && Number.isInteger(parsedPlanId) && parsedPlanId > 0
+      ? parsedPlanId
+      : null;
+
+  // 일정 클릭 → URL 에 ?planId= 부여(SSoT). 상세 모달이 이를 읽어 열린다.
+  const handleSelectPlan = (id: number): void => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('planId', String(id));
+        return next;
+      },
+      { replace: false },
+    );
+  };
+
+  // 모달 닫기 → ?planId 제거.
+  const handleCloseDetail = (): void => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('planId');
+        return next;
+      },
+      { replace: false },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -50,12 +84,12 @@ function MainPage() {
   return (
     <div className="flex flex-col gap-8">
       <section aria-label="월간 캘린더">
-        <MonthlyCalendar plans={plans} />
+        <MonthlyCalendar plans={plans} onSelectPlan={handleSelectPlan} />
       </section>
 
       <section aria-label="주간 일정 바" className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-charcoal">주간 할 일</h2>
-        <WeeklyPlanBar plans={plans} todayKst={todayKst} />
+        <WeeklyPlanBar plans={plans} todayKst={todayKst} onSelectPlan={handleSelectPlan} />
       </section>
 
       <section aria-label="오늘 할 일 목록" className="flex flex-col gap-3">
@@ -63,10 +97,14 @@ function MainPage() {
           <h2 className="text-sm font-medium text-charcoal">오늘 할 일</h2>
           <span className="text-xs text-outline">{todayKst.replaceAll('-', '.')}</span>
         </div>
-        <TodayPlanList plans={todayPlans} todayKst={todayKst} />
+        <TodayPlanList plans={todayPlans} todayKst={todayKst} onSelectPlan={handleSelectPlan} />
       </section>
 
       <CreatePlanFAB />
+
+      {openPlanId !== null ? (
+        <PlanDetailModal planId={openPlanId} onClose={handleCloseDetail} />
+      ) : null}
     </div>
   );
 }

@@ -14,12 +14,14 @@ import type { Plan } from '@/types/domain';
 interface WeeklyPlanBarProps {
   plans: Plan[];
   todayKst: string;
+  /** 펼친 목록의 카드 클릭 시 상세 모달 오픈(?planId=). */
+  onSelectPlan?: (planId: number) => void;
 }
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 const MAX_BAR_HEIGHT = 60;
 
-function WeeklyPlanBar({ plans, todayKst }: WeeklyPlanBarProps) {
+function WeeklyPlanBar({ plans, todayKst, onSelectPlan }: WeeklyPlanBarProps) {
   const selectedWeekday = usePlanStore((s) => s.selectedWeekday);
   const toggleWeekday = usePlanStore((s) => s.toggleWeekday);
 
@@ -82,7 +84,11 @@ function WeeklyPlanBar({ plans, todayKst }: WeeklyPlanBarProps) {
             <ul className="flex flex-col gap-2">
               {selectedPlans.map((plan) => (
                 <li key={plan.id}>
-                  <PlanCard plan={plan} todayKst={todayKst} />
+                  <PlanCard
+                    plan={plan}
+                    todayKst={todayKst}
+                    {...(onSelectPlan ? { onSelect: onSelectPlan } : {})}
+                  />
                 </li>
               ))}
             </ul>

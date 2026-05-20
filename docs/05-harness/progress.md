@@ -32,7 +32,7 @@
 | Step 8 | 프론트(인증) | 완료 | 2026-05-21T03:55:00+09:00 | 2026-05-21T04:25:00+09:00 | 로그인/회원가입 화면 + 인증 API 연동 + authStore 실인증 전환 + httpClient 401 refresh-retry 완성 + 새로고침 세션복원 + 보호라우트 접근제어. typecheck/lint 0, backend 회귀 107건, vite build 188 modules. Playwright E2E 10흐름 PASS(회원가입→로그인→세션복원→로그아웃, 보호라우트 차단). 검증 중 차단버그 1건 수정(StrictMode 부트스트랩 정지) + 개선 2건. 프론트 테스트 러너 미설치로 RTL 파일만 작성(미실행) |
 | Step 9 | 프론트(메인) | 완료 | 2026-05-21T04:30:00+09:00 | 2026-05-21T04:55:00+09:00 | 메인 페이지(월간 캘린더+주간 일정 바+오늘 할 일+FAB+로딩/에러/빈 상태) + GET /plans 연동 + PATCH /complete 완료 토글(중복 클릭 방지). 캘린더=dueDate(완료 포함)·오늘=displayDate 미완료·주간=displayDate, KST 고정·D-Day 배지. typecheck/lint 0, backend 107건, vite build 209 modules. Playwright E2E(일정 5건 시드): 캘린더/주간/오늘/완료토글/새로고침 유지 PASS, 콘솔 에러 0. 상세/수정/삭제 UI는 범위 외(후속). 프론트 테스트 러너 미설치로 RTL 파일만 작성 |
 | Step 10 | 프론트(등록/수정) | 완료 | 2026-05-21T05:00:00+09:00 | 2026-05-21T05:25:00+09:00 | /tasks/new 등록 페이지 + 재사용 PlanForm(create/edit) + POST/PATCH /plans + GET /categories 연동 + display_date 기본=due_date(FE-10) + display>due 교차검증 + 저장/취소 확인 모달(FE-06). typecheck/lint 0, backend 107건, vite build 219 modules. Playwright E2E: 등록 성공→메인 반영(오늘/캘린더/주간), 필수값·교차검증·취소모달 PASS, 콘솔 에러 0. 상세/삭제 UI는 범위 외(edit 모드 기능만 준비). 프론트 테스트 러너 미설치로 RTL 파일만 작성 |
-| Step 11 | 프론트(프로필) | 미시작 | - | - | - |
+| Step 11 | 프론트(프로필) | 완료 | 2026-05-21T05:30:00+09:00 | 2026-05-21T06:00:00+09:00 | 일정 상세 모달(K-08 ?planId)+수정(PlanForm edit·PATCH)+삭제(ConfirmModal·DELETE 204) + 카테고리 CRUD(HEX검증·중복명409·삭제 affectedPlans 미분류 안내) + 프로필(닉네임·비번·아바타 multipart, email 불변). typecheck/lint 0, backend 107건, vite build 248 modules. Playwright E2E 14흐름 PASS(상세·수정·삭제·카테고리 생성/삭제·프로필 3종), Step 8·9·10 회귀 PASS, 콘솔 에러 0. 프론트 테스트 러너 미설치로 RTL 파일만 작성 |
 | Step 12 | 프론트(검색/필터+E2E) | 미시작 | - | - | - |
 
 **상태 범례:** 미시작 / 진행 중 / 완료 / 보류 / 실패
@@ -1384,76 +1384,146 @@ cd frontend && node ../node_modules/vite/bin/vite.js build # PASS — 219 module
 
 ---
 
-## Step 11. 프로필 페이지 + 카테고리 관리
+## Step 11. 일정 상세/수정/삭제 모달 + 카테고리 관리 + 프로필 페이지
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** wireframe-spec.md §6·§7, screen-flow.md §10, api-spec.md §5·§6, design-review.md DB-03
+- **상태:** 완료
+- **시작:** 2026-05-21T05:30:00+09:00
+- **완료:** 2026-05-21T06:00:00+09:00
+- **참조 문서:** wireframe-spec.md §5·§6·§7·§10, screen-flow.md §10, api-spec.md §4-3·§4-4·§4-5·§5·§6, design-review.md DB-03·FE-01·K-08·K-09, PRD §25·§28·§29
+
+### 범위 노트 (한 것 / 안 한 것)
+
+- **한 것:** 일정 상세 모달(K-08 `?planId=`, 읽기 전용) + 수정(PlanForm edit 재사용, PATCH) + 삭제(ConfirmModal→DELETE 204) / 카테고리 관리(GET·POST·PUT·DELETE, HEX 검증, 중복명 409, 삭제 시 affectedPlans·미분류 안내) / 프로필(닉네임 PATCH·비번 PATCH·아바타 POST multipart, email 불변) + 상태(로딩/빈/에러/검증/중복클릭·업로드 방지). Step 9~10에서 미뤘던 PlanDetailModal·getPlan/usePlan·deletePlan/useDeletePlan을 본 Step에서 구현·연결.
+- **안 한 것(범위 외):** 검색/필터·빈 상태 전역·에러 바운더리(Step 12).
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21 — executor(opus)로 Step 11 구현: PlanDetailModal+Modal+getPlan/deletePlan(+hooks), 카테고리 CRUD(api/hooks/schema/components), 프로필(api/hooks/schema/components), ProfilePage 조립, 메인/오늘/주간/캘린더 항목에 `?planId` 클릭 진입 배선.
+- 2026-05-21 — orchestrator 실측 검증: 백(4000)+프(5173) 기동 + 일정 API 시드 후 Playwright로 상세→수정→삭제, 카테고리 생성/삭제(affectedPlans), 프로필 닉네임/아바타/비번변경 전 흐름 검증. 차단 이슈 0건(executor 산출물 결함 없음).
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (frontend/src):**
+- `components/ui/Modal.tsx` — 범용 모달 셸(오버레이+ESC/외부클릭 닫기)
+- `features/plans/components/PlanDetailModal.tsx` — 상세(읽기 전용)+수정(PlanForm edit)+삭제(ConfirmModal) 통합, 캐시 우선/GET 폴백
+- `features/plans/api/{getPlan,deletePlan}.ts`(DELETE 204 본문 없음) · `hooks/{usePlan,useDeletePlan}.ts`
+- `features/categories/schemas/category.schema.ts`(name 1~30, HEX `#RRGGBB`, sortOrder 양수)
+- `features/categories/api/{createCategory,updateCategory,deleteCategory}.ts`(POST 201 / PUT 전체교체 / DELETE 200+{message,affectedPlans})
+- `features/categories/hooks/{useCreateCategory,useUpdateCategory,useDeleteCategory}.ts`(create→`['categories']`, update·delete→`['categories']`+`['plans']` 무효화)
+- `features/categories/components/{CategoryChip,CategoryFormModal,CategoryList}.tsx`
+- `features/profile/schemas/{profile.schema,password.schema}.ts`(닉네임 2~20 공백불가 / newPassword 영문+숫자 8~72+확인일치)
+- `features/profile/api/{getProfile,updateProfile,changePassword,uploadAvatar}.ts`(아바타 FormData multipart)
+- `features/profile/hooks/{useProfile,useUpdateProfile,useChangePassword,useUploadAvatar}.ts`(프로필/아바타 성공 시 authStore user 동기화)
+- `features/profile/components/{ProfileForm,PasswordForm,AvatarUpload}.tsx`
 
-- 예시: `frontend/src/pages/ProfilePage.tsx`
-- 예시: `frontend/src/features/categories/components/CategoryChip.tsx`
-- 예시: `frontend/src/features/categories/components/CategoryList.tsx`
-- 예시: `frontend/src/features/categories/components/CategoryFormModal.tsx`
-- 예시: `frontend/src/features/categories/api/getCategories.ts`
-- 예시: `frontend/src/features/categories/api/createCategory.ts`
-- 예시: `frontend/src/features/categories/api/updateCategory.ts`
-- 예시: `frontend/src/features/categories/api/deleteCategory.ts`
-- 예시: `frontend/src/features/categories/hooks/useCategories.ts`
-- 예시: `frontend/src/features/categories/hooks/useCreateCategory.ts`
-- 예시: `frontend/src/features/categories/hooks/useUpdateCategory.ts`
-- 예시: `frontend/src/features/categories/hooks/useDeleteCategory.ts`
-- 예시: `frontend/src/features/categories/schemas/category.schema.ts`
-- 예시: `frontend/src/features/profile/components/ProfileForm.tsx`
-- 예시: `frontend/src/features/profile/components/PasswordForm.tsx`
-- 예시: `frontend/src/features/profile/components/AvatarUpload.tsx`
-- 예시: `frontend/src/features/profile/api/getProfile.ts`
-- 예시: `frontend/src/features/profile/api/updateProfile.ts`
-- 예시: `frontend/src/features/profile/api/changePassword.ts`
-- 예시: `frontend/src/features/profile/api/uploadAvatar.ts`
-- 예시: `frontend/src/features/profile/hooks/useProfile.ts`
-- 예시: `frontend/src/features/profile/hooks/useUpdateProfile.ts`
-- 예시: `frontend/src/features/profile/hooks/useChangePassword.ts`
-- 예시: `frontend/src/features/profile/hooks/useUploadAvatar.ts`
-- 예시: `frontend/src/features/profile/schemas/profile.schema.ts`
-- 예시: `frontend/src/features/profile/schemas/password.schema.ts`
-- 예시: `frontend/tests/unit/categories/CategoryFormModal.test.tsx`
-- 예시: `frontend/tests/unit/profile/ProfileForm.test.tsx`
-- 예시: `frontend/e2e/profile.spec.ts`
+**생성 (frontend/tests):** `tests/unit/categories/category.schema.test.ts`, `tests/unit/profile/{password.schema,avatarValidation}.test.ts`, `tests/unit/plans/PlanDetailModal.test.tsx` (RTL — 러너 미설치, 파일만)
+
+**수정:** `pages/ProfilePage.tsx`(프로필/비번/카테고리 3섹션) · `pages/MainPage.tsx`(`?planId` useSearchParams로 PlanDetailModal 마운트) · `features/plans/components/{TodayPlanList,PlanCard,WeeklyPlanBar}.tsx` + `features/calendar/components/{MonthlyCalendar,CalendarDayPopup}.tsx`(항목 클릭→`?planId`, 체크박스 클릭 stopPropagation) · `types/domain.ts`(`ProfileUser` 추가, additive)
+
+> 백엔드/Prisma 무수정. docs는 본 progress.md만. 새 npm 의존성 없음.
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+npm run typecheck   # PASS — frontend + backend 0 에러
+npm run lint        # PASS — 0 에러·0 warning
+cd backend && node ../node_modules/vitest/vitest.mjs run   # PASS — 10파일 107건
+cd frontend && node ../node_modules/vite/bin/vite.js build # PASS — 248 modules
+# Playwright E2E: 백(4000)+프(5173) 기동 + 일정/아바타 시드 후 검증
+```
 
-- 예시: `cd frontend && npm run test -- profile`
-- 예시: `cd frontend && npx playwright test profile.spec.ts`
-- 예시: `cd frontend && npm run typecheck`
+### 구현된 일정 상세/수정/삭제 범위
 
-### 검증 결과
+- **상세(K-08):** 항목(오늘 할 일/캘린더 팝업/주간 바) 클릭 → URL `?planId=<id>` → PlanDetailModal. 읽기 전용: 제목·D-Day·마감일·표시 날짜·카테고리(Chip)·중요도·알림·완료 상태. 닫기 버튼/외부클릭/ESC. 캐시 우선, 없으면 GET `/plans/:id`.
+- **수정:** 모달 내 "수정" → PlanForm `mode="edit"` 인라인(별도 페이지 없음, FE) → PATCH `/plans/:id` → `['plans']` 무효화 → 메인 캘린더/주간/오늘 즉시 갱신, 읽기 전용 복귀. dueDate/displayDate 규칙 Step 9~10 동일.
+- **삭제:** "삭제" → ConfirmModal("이 일정을 삭제하시겠습니까? 되돌릴 수 없습니다") → DELETE `/plans/:id`(204, 본문 없음) → 모달 닫힘 → 메인에서 제거. 중복 클릭 방지(isPending disable).
 
-- [ ] 카테고리 목록 표시 (sort_order 순)
-- [ ] 카테고리 추가 모달: 이름·색상 입력 → 저장 → 목록 추가 확인
-- [ ] 중복 카테고리명 입력 → 409 에러 Toast 표시 확인
-- [ ] 카테고리 수정: PUT /api/v1/categories/:id (전체 교체, name·color·sort_order 필수)
-- [ ] 카테고리 삭제 → 삭제 확인 모달 → 삭제 → 연결 일정 "미분류" 표시 확인 (K-09=B)
-- [ ] 카테고리 색상 선택기: 허용 HEX 형식 검증 (Zod `z.string().regex(/^#[0-9A-Fa-f]{6}$/)`)
-- [ ] 닉네임 수정 → 2~20자, 공백 불가 검증
-- [ ] 비밀번호 변경 → 현재 비밀번호 검증 + 새 비밀번호 8자 이상 검증
-- [ ] 아바타 업로드 → 이미지 표시 갱신 확인
-- [ ] Playwright P-06 시나리오 통과 (카테고리 CRUD)
-- [ ] validation.md §3-3·§3-4 기준 통과
+### 구현된 카테고리 관리 UI 범위
+
+- ProfilePage 내 "카테고리 관리" 섹션. 목록(sortOrder 순) + "+ 추가" + 항목별 수정/삭제.
+- **생성** POST(이름+5색 스와치/커스텀 HEX). **수정** PUT(전체 교체, name+color+sort_order 필수). **삭제** DELETE.
+- **HEX 검증** zod `#RRGGBB`. **중복명 409** → 이름 필드 "이미 사용 중인 카테고리명입니다." inline.
+- **삭제 정책 명시:** 확인 모달이 사전 안내("카테고리 'X'을(를) 삭제하면 연결된 일정 N개가 '미분류'로 변경됩니다."), 삭제 후 토스트(affectedPlans 기반 "일정 N개가 미분류로 이동했습니다."). `['categories']`+`['plans']` 동시 무효화 → 메인의 해당 일정 즉시 "미분류" 표시.
+
+### 구현된 프로필 기능 범위
+
+- **GET /profile** 마운트 시 로드. 3섹션(프로필 정보 / 비밀번호 변경 / 카테고리 관리).
+- **닉네임:** PATCH `/profile`(2~20 공백불가) → 성공 시 authStore 동기화(헤더 반영). **email 읽기 전용 disabled + "이메일은 변경할 수 없습니다."**
+- **비밀번호:** PATCH `/profile/password`(currentPassword+newPassword 영문+숫자 8~72+확인). 401 → "현재 비밀번호가 올바르지 않습니다.", 422 필드 에러, 성공 시 필드 초기화+토스트.
+- **아바타:** POST `/profile/avatar` multipart(jpg/png/webp, ≤5MB 클라이언트 사전검증, 업로드 중 disable). 성공 시 authStore avatarUrl 동기화·이미지 표시. 민감정보 미표시.
+
+### API 연동 방식
+
+- 모두 기존 `httpClient`(Bearer + 401 refresh-retry) 재사용. 아바타만 FormData(axios가 multipart 경계 자동 설정).
+- 무효화: 일정 수정/삭제 → `['plans']`; 카테고리 수정/삭제 → `['categories']`+`['plans']`; 카테고리 생성 → `['categories']`.
+- 표준 success/error: ApiResponse 타입 가드, 에러 코드별 매핑(409/401/422/400 FILE_TOO_LARGE·INVALID_FILE_TYPE).
+
+### Playwright 검증 결과 (2026-05-21, 백+프 기동, 실측 E2E)
+
+| 흐름 | 결과 | 근거 |
+|---|---|---|
+| 로그인 후 메인 접근 | PASS | 세션 복원 → / |
+| 일정 클릭 → 상세 모달 | PASS | 오늘 항목 클릭 → `?planId=6`, 읽기 전용 필드 표시 |
+| 일정 수정 → 메인 반영 | PASS | 중요도 보통→높음 PATCH → 모달·메인 즉시 갱신(상단 이동) |
+| 일정 삭제 → 메인 반영 | PASS | ConfirmModal → DELETE 204 → 모달 닫힘 → 오늘 3→2건, 캘린더 21일 2→1건 |
+| 카테고리 생성 | PASS | "독서" 추가 → 목록 반영 |
+| 카테고리 삭제 | PASS | "시험" 삭제 확인("연결 일정 1개 미분류") → 삭제 → 목록 제거 + 메인 "데이터베이스 복습" 미분류 표시 |
+| 프로필 닉네임 수정 | PASS | 테스트유저→테스트유저2, 백엔드 영속 확인 |
+| 비밀번호 변경 | PASS | planmate123→456 변경 후 신규 비번 로그인 200 확인(검증 후 123으로 복원) |
+| 아바타 업로드 | PASS | PNG 업로드 → avatarUrl `/uploads/avatars/4_*.png` 영속 + UI 이미지 표시 |
+| email 변경 불가 | PASS | disabled + "이메일은 변경할 수 없습니다." |
+| Step 8 회귀 | PASS | 로그인 정상 |
+| Step 9 회귀 | PASS | 메인 캘린더/오늘/주간 정상 |
+| Step 10 회귀 | PASS | /tasks/new 폼 렌더, 카테고리 칩 라이브 반영(시험 제거·독서 추가) |
+| 콘솔 에러 | PASS | 전 흐름 0건(비로그인 부트스트랩 refresh 401만, React Router v7 경고 1건 정보성) |
+
+> **참고(비차단):** 비밀번호 변경 검증을 위해 API로 신규 비번 로그인 시 리프레시 토큰 회전이 일어나 브라우저 세션이 1회 로그아웃됨(사용자당 단일 리프레시 토큰 정책 — 정상 보안 동작). 이후 재로그인으로 회귀 확인 완료.
 
 ### 남은 문제
 
-- 없음
+- **프론트 단위 테스트 러너 미설치(비차단, Step 8~10과 동일).** category/password/avatar/PlanDetailModal RTL 파일 작성 완료, 러너(vitest+jsdom+RTL) 설정 후 실행 가능. `tsconfig include`가 `["src"]`라 typecheck/build 무영향. 가짜 통과 없음.
+- 검증용으로 dev DB(gitignore) 상태 변경: 닉네임 테스트유저2, 아바타 업로드, 카테고리 "독서" 추가·"시험" 삭제, 일정 "회귀 리포트" 삭제 — 개발 DB 산출물(무해). 업로드 파일은 `backend/uploads/`(gitignore).
+
+### 다음 Step에서 해야 할 일 (Step 12 — 검색·필터 + 빈 상태 + E2E)
+
+- SearchBar + PlanFilterBar(카테고리/중요도/완료 칩, OR/AND 규칙) + SearchResultList + 전역 빈 상태(EmptyState) + ErrorBoundary.
+- GET /plans 검색·필터 파라미터(search/category/priority/completed/uncategorized) 연동.
+- Playwright E2E 전체 시나리오 + 검색/필터 흐름 검증.
+
+---
+
+### Step 11 독립 검증 결과 (verifier + orchestrator, 2026-05-21T06:15:00+09:00)
+
+> 별도 검증 패스(수정 금지). 정적/코드리뷰는 read-only verifier(opus)가, 4개 런타임 게이트는 orchestrator가 실행, 런타임 흐름은 orchestrator Playwright 스모크로 확인. 코드 무수정.
+
+**판정: APPROVE (22/22 PASS, 차단 0건).** 코드 결함 0건.
+
+| # | 기준 | 판정 | 근거 |
+|---|---|---|---|
+| 1 | Step 11 범위만 구현 | PASS | 변경 파일 전부 harness §Step 11 허용 목록(상세/카테고리/프로필) + 명시 배선 편집(MainPage·TodayPlanList·PlanCard·WeeklyPlanBar·CalendarDayPopup·MonthlyCalendar·types/domain). 이탈 0 |
+| 2 | 검색/필터(Step 12) 미구현 | PASS | SearchBar/PlanFilterBar/SearchResultList/EmptyState/ErrorBoundary grep 0건 |
+| 3 | 백엔드 무수정 | PASS | `git status backend/src backend/prisma` 변경 0 |
+| 4 | 일정 상세 모달 표시 | PASS | Playwright 실측: 데이터베이스 복습 클릭 → `?planId=2` → 읽기전용 필드(제목·D-3·마감일·표시날짜·미분류·중요도·알림) 렌더 |
+| 5 | 수정 ↔ PATCH /plans/:id | PASS | `updatePlan.ts` PATCH + PlanForm edit; 구현 세션 실측(보통→높음 반영) |
+| 6 | 삭제 ↔ DELETE /plans/:id (204) | PASS | `deletePlan.ts` 본문 없음 처리; 구현 세션 실측(삭제 후 메인 제거) |
+| 7 | 수정/삭제 후 메인 갱신 | PASS | useUpdate/useDeletePlan `['plans']` 무효화 → 캘린더/주간/오늘 갱신(실측) |
+| 8 | dueDate/displayDate 규칙 유지 | PASS | 상세 모달 마감일(5/24)≠표시날짜(5/21) 구분 표시(실측) + PlanForm 교차검증 |
+| 9 | 카테고리 CRUD ↔ API | PASS | POST/PUT(전체교체)/DELETE(affectedPlans) 배선; 구현 세션 실측(독서 생성·시험 삭제) |
+| 10 | 카테고리 삭제 null 정책 UI | PASS | 삭제 확인 "연결 일정 N개 미분류" 사전 안내, Chip `name ?? '미분류'`·회색 점; 실측 데이터베이스 복습 미분류 표시 |
+| 11 | 프로필 조회/닉네임/비번/아바타 | PASS | GET/PATCH/PATCH password/POST avatar(multipart) 배선; 실측 프로필 렌더 + 구현 세션 닉네임·아바타·비번 변경 확인 |
+| 12 | 민감 정보 미노출 | PASS | `features/profile` passwordHash/token grep 0건, ProfileUser 타입에 hash/token 없음 |
+| 13 | email 불변 UI | PASS | ProfileForm email `readOnly disabled` + "이메일은 변경할 수 없습니다."(실측) |
+| 14 | 미니멀 디자인 기준 | PASS | Modal `shadow-sm`+soft-border, charcoal/outline/surface 토큰, 카테고리 5색 절제 팔레트, 과한 그림자/색/라운드 없음 |
+| 15 | npm run typecheck | PASS | orchestrator 실행 exit 0 (frontend+backend) |
+| 16 | npm run lint | PASS | orchestrator 실행 exit 0 (`--max-warnings=0`) |
+| 17 | backend npm run test | PASS | orchestrator 실행 10파일 107건, exit 0 |
+| 18 | vite build | PASS | orchestrator 실행 exit 0 (248 modules) |
+| 19 | Playwright 주요 흐름 확인 | PASS | 구현 세션 14흐름 + 본 검증 스모크(상세 모달·미분류 일정·프로필) 재확인, 콘솔 에러 0 |
+| 20 | Step 8~10 회귀 | PASS | 본 검증 스모크: 세션 복원·메인 렌더 정상 0 에러; 게이트(빌드/테스트) 통과로 회귀 무 |
+| 21 | 범위 밖 파일 무수정 | PASS | 범위 내 한정, `any`/`@ts-ignore`/console/debugger grep 0건 |
+| 22 | progress.md 기록 | PASS | Step 11 §(완료) + 대시보드 갱신 + 본 검증 결과 추가 |
+
+**비고:** read-only verifier는 서브에이전트 환경에서 셸 권한이 차단되어 게이트 15~18을 직접 실행하지 못함(UNVERIFIED로 정직 보고). 이를 orchestrator가 본 세션에서 직접 실행해 4건 모두 PASS로 확정. verifier 정적 18항목은 전부 PASS(코드 결함 0). **문제 목록: 없음.**
 
 ---
 

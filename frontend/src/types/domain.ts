@@ -18,6 +18,18 @@ export interface User {
 /** 프로필 화면용 사용자 표현 (현재 User와 동일 형태) */
 export type Profile = User;
 
+/**
+ * 프로필 API(GET/PATCH /profile) 응답 사용자 표현.
+ * api-spec §6: id·email·nickname·avatarUrl·createdAt 만 반환(updatedAt 없음).
+ */
+export interface ProfileUser {
+  id: number;
+  email: string;
+  nickname: string;
+  avatarUrl: string | null;
+  createdAt: string;
+}
+
 export interface Category {
   id: number;
   userId: number;

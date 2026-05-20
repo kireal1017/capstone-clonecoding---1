@@ -15,9 +15,11 @@ import type { Plan } from '@/types/domain';
 interface TodayPlanListProps {
   plans: Plan[];
   todayKst: string;
+  /** 카드 클릭 시 상세 모달 오픈(?planId=). */
+  onSelectPlan?: (planId: number) => void;
 }
 
-function TodayPlanList({ plans, todayKst }: TodayPlanListProps) {
+function TodayPlanList({ plans, todayKst, onSelectPlan }: TodayPlanListProps) {
   const { mutate, isPending } = useCompletePlan();
   const { showToast } = useToast();
   const [pendingId, setPendingId] = useState<number | null>(null);
@@ -57,6 +59,7 @@ function TodayPlanList({ plans, todayKst }: TodayPlanListProps) {
             showCheckbox
             isToggling={isPending && pendingId === plan.id}
             onToggle={handleToggle}
+            {...(onSelectPlan ? { onSelect: onSelectPlan } : {})}
           />
         </li>
       ))}

@@ -1,7 +1,7 @@
 {
   "tool_name": "mcp__playwright__browser_snapshot",
-  "tool_input_preview": "{\"target\":\"e237\"}",
-  "error": "### Error\nError: Ref e237 not found in the current page snapshot. Try capturing new snapshot.",
-  "timestamp": "2026-05-20T20:09:21.113Z",
+  "tool_input_preview": "{\"target\":\"e16\"}",
+  "error": "### Error\nError: Ref e16 not found in the current page snapshot. Try capturing new snapshot.",
+  "timestamp": "2026-05-20T20:53:21.879Z",
   "retry_count": 2
 }

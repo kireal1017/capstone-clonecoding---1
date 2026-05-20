@@ -4,14 +4,17 @@ import { parseDateOnly } from '@/lib/date/kst';
 import type { Plan } from '@/types/domain';
 
 /**
- * 캘린더 날짜 셀 미니 팝업 — 읽기 전용(wireframe §3, FE-07).
+ * 캘린더 날짜 셀 미니 팝업 (wireframe §3, FE-07).
  * 해당 날짜(dueDate 기준)의 일정 제목 + 카테고리 태그 + 시간을 나열한다.
- * READ-ONLY: 상세 모달 이동/수정/삭제 없음. 외부 클릭 또는 ESC 로 닫는다.
+ * 외부 클릭 또는 ESC 로 닫는다. onSelectPlan 제공 시 일정 항목을 클릭해
+ * 상세 모달을 연다(Step 11, ?planId=).
  */
 interface CalendarDayPopupProps {
   date: string;
   plans: Plan[];
   onClose: () => void;
+  /** 일정 항목 클릭 시 상세 모달 오픈(?planId=). */
+  onSelectPlan?: (planId: number) => void;
 }
 
 function formatPopupTitle(dateStr: string): string {
@@ -19,7 +22,7 @@ function formatPopupTitle(dateStr: string): string {
   return `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 일정`;
 }
 
-function CalendarDayPopup({ date, plans, onClose }: CalendarDayPopupProps) {
+function CalendarDayPopup({ date, plans, onClose, onSelectPlan }: CalendarDayPopupProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,20 +62,39 @@ function CalendarDayPopup({ date, plans, onClose }: CalendarDayPopupProps) {
         <p className="py-2 text-center text-xs text-outline">이 날 등록된 일정이 없습니다.</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {plans.map((plan) => (
-            <li key={plan.id} className="flex items-center justify-between gap-2 text-xs">
-              <span
-                className={[
-                  'min-w-0 flex-1 truncate',
-                  plan.isCompleted ? 'text-outline line-through' : 'text-on-surface',
-                ].join(' ')}
-              >
-                {plan.title}
-              </span>
-              <Chip name={plan.category?.name ?? null} color={plan.category?.color ?? null} />
-              {plan.dueTime ? <span className="text-outline">🕐{plan.dueTime}</span> : null}
-            </li>
-          ))}
+          {plans.map((plan) => {
+            const rowContent = (
+              <>
+                <span
+                  className={[
+                    'min-w-0 flex-1 truncate',
+                    plan.isCompleted ? 'text-outline line-through' : 'text-on-surface',
+                  ].join(' ')}
+                >
+                  {plan.title}
+                </span>
+                <Chip name={plan.category?.name ?? null} color={plan.category?.color ?? null} />
+                {plan.dueTime ? <span className="text-outline">🕐{plan.dueTime}</span> : null}
+              </>
+            );
+            return (
+              <li key={plan.id}>
+                {onSelectPlan ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectPlan(plan.id)}
+                    className="flex w-full items-center justify-between gap-2 rounded px-1 py-0.5 text-left text-xs transition-colors hover:bg-surface-container-low"
+                  >
+                    {rowContent}
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between gap-2 px-1 py-0.5 text-xs">
+                    {rowContent}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
