@@ -30,7 +30,7 @@
 | Step 6 | 백엔드(프로필) | 완료 | 2026-05-21 | 2026-05-21T02:15:00+09:00 | 프로필 API 4개(GET/PATCH/PATCH password/POST avatar) + 통합 19건 통과(전체 10파일 107건, 회귀 무). 본인(req.user.userId)만 접근, 닉네임=PATCH(email 불변), 비번변경=verifyPassword→hashPassword(현재 불일치 401 AUTH_INVALID_CREDENTIALS, refreshTokenHash 미변경=§6-3 정책), 아바타=multer(jpg/png/webp·5MB, 초과 400 FILE_TOO_LARGE·형식 400 INVALID_FILE_TYPE·누락 422), /uploads 정적서빙. typecheck/lint 0. verifier-1 검증: 21/21 PASS (2026-05-21T02:40:00+09:00). 추가점검: bcrypt 20초 타임아웃=환경 보정(단언 손실 없음) PASS. updatedAt 포함=validation §3-4 정합 PASS. |
 | Step 7 | 프론트(골격) | 완료 | 2026-05-21T02:50:00+09:00 | 2026-05-21T03:10:00+09:00 | 라우팅 골격(createBrowserRouter 6경로: /login·/register·/·/tasks/new·/profile·*) + AppShell + ProtectedRoute/PublicOnlyRoute + authStore(placeholder isAuthenticated:true) + httpClient(axios, withCredentials, Bearer 인터셉터, 401 refresh 구조 stub) + api/domain 타입 + 디자인 토큰(tailwind.config 선반영). typecheck/lint 0, vite build 106 modules OK, 백엔드 회귀 10파일 107건 통과. 경로 편차(/register·/tasks/new) 의도적. 2026-05-21 Playwright MCP로 6경로 렌더 검증 완료(전 경로 콘솔 에러 0). 프론트 단위테스트는 Step 8에서 RTL 도입 시 처리 |
 | Step 8 | 프론트(인증) | 완료 | 2026-05-21T03:55:00+09:00 | 2026-05-21T04:25:00+09:00 | 로그인/회원가입 화면 + 인증 API 연동 + authStore 실인증 전환 + httpClient 401 refresh-retry 완성 + 새로고침 세션복원 + 보호라우트 접근제어. typecheck/lint 0, backend 회귀 107건, vite build 188 modules. Playwright E2E 10흐름 PASS(회원가입→로그인→세션복원→로그아웃, 보호라우트 차단). 검증 중 차단버그 1건 수정(StrictMode 부트스트랩 정지) + 개선 2건. 프론트 테스트 러너 미설치로 RTL 파일만 작성(미실행) |
-| Step 9 | 프론트(메인) | 미시작 | - | - | - |
+| Step 9 | 프론트(메인) | 완료 | 2026-05-21T04:30:00+09:00 | 2026-05-21T04:55:00+09:00 | 메인 페이지(월간 캘린더+주간 일정 바+오늘 할 일+FAB+로딩/에러/빈 상태) + GET /plans 연동 + PATCH /complete 완료 토글(중복 클릭 방지). 캘린더=dueDate(완료 포함)·오늘=displayDate 미완료·주간=displayDate, KST 고정·D-Day 배지. typecheck/lint 0, backend 107건, vite build 209 modules. Playwright E2E(일정 5건 시드): 캘린더/주간/오늘/완료토글/새로고침 유지 PASS, 콘솔 에러 0. 상세/수정/삭제 UI는 범위 외(후속). 프론트 테스트 러너 미설치로 RTL 파일만 작성 |
 | Step 10 | 프론트(등록/수정) | 미시작 | - | - | - |
 | Step 11 | 프론트(프로필) | 미시작 | - | - | - |
 | Step 12 | 프론트(검색/필터+E2E) | 미시작 | - | - | - |
@@ -1195,78 +1195,96 @@ cd frontend && node ../node_modules/vite/bin/vite.js --port 5173 --strictPort
 
 ---
 
-## Step 9. 메인 페이지 (캘린더·주간·오늘 + 상세 모달)
+## Step 9. 메인 페이지 (캘린더·주간·오늘)
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** wireframe-spec.md §3·§5, frontend-spec.md §3-3, screen-flow.md §2·§4·§5, design-review.md FE-07·FE-11·FE-12, PRD §22·§23·§24
+- **상태:** 완료
+- **시작:** 2026-05-21T04:30:00+09:00
+- **완료:** 2026-05-21T04:55:00+09:00
+- **참조 문서:** wireframe-spec.md §3·§8-5·§10, frontend-spec.md §3-3, screen-flow.md §2·§4·§5, api-spec.md §4-1·§4-6, design-reference.md, PRD §22·§23·§24·§25·§32
+
+### 범위 노트 (한 것 / 안 한 것)
+
+- **한 것:** 메인 페이지(/) — 월간 캘린더 + 주간 일정 바 + 오늘 할 일 + FAB + 로딩/에러/빈 상태. GET /plans 연동, PATCH /complete 완료 토글(중복 클릭 방지). 공통 UI 4종(Checkbox/Badge/FAB/Chip), KST 날짜/D-Day 헬퍼.
+- **안 한 것(본 작업 범위 외 — 사용자가 명시적으로 제외):** **일정 상세/수정/삭제 UI(PlanDetailModal, ?planId 연동), getPlan/usePlan** — 후속 Step. 일정 등록 폼(Step 10), 검색/필터 바·칩(Step 12), 카테고리/프로필 UI(Step 11). 캘린더 날짜 셀 클릭 시 **읽기 전용** 팝업만 제공(상세 모달 미연동).
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21 — executor(opus)로 Step 9 구현: 캘린더(MonthlyCalendar/CalendarCell/CalendarHeader/CalendarDayPopup + useCalendar/calendarStore) + plans(getPlans/completePlan, usePlans/useCompletePlan, planStore, PlanCard/TodayPlanList/WeeklyPlanBar/CreatePlanFAB) + UI(Checkbox/Badge/FAB/Chip) + date(kst/dday) + MainPage 조립.
+- 2026-05-21 — orchestrator 실측 검증: 백엔드(4000)+프론트(5173) 기동, 테스트 사용자에 일정 5건 API 시드 후 Playwright로 전 영역·완료 토글·새로고침 검증. 차단 이슈 0건(executor 산출물 결함 없음).
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (frontend/src):**
+- `lib/date/kst.ts` — KST(+09:00 고정) 헬퍼(getTodayKst/getCurrentMonthKst/diffInDays/getWeekdayIndex/getIsoWeekDates/getMonthGridDates/shiftMonth/formatMonthLabel/parse·formatDateOnly)
+- `lib/date/dday.ts` — `getDDayBadge(dueDate, todayKst)` (wireframe §10 규칙)
+- `features/plans/api/getPlans.ts` · `completePlan.ts`
+- `features/plans/hooks/usePlans.ts`(쿼리+파티션 헬퍼: groupByDueDate/groupByDisplayDate/selectTodayPlans/selectWeeklyPlans, queryKey `['plans']`) · `useCompletePlan.ts`
+- `features/plans/stores/planStore.ts`(선택 요일 토글)
+- `features/plans/components/PlanCard.tsx` · `TodayPlanList.tsx` · `WeeklyPlanBar.tsx` · `CreatePlanFAB.tsx`
+- `features/calendar/stores/calendarStore.ts`(month + selectedDate) · `hooks/useCalendar.ts`(6×7 그리드)
+- `features/calendar/components/MonthlyCalendar.tsx` · `CalendarCell.tsx` · `CalendarHeader.tsx` · `CalendarDayPopup.tsx`(읽기 전용)
+- `components/ui/Chip.tsx` · `Badge.tsx` · `Checkbox.tsx` · `FAB.tsx`
 
-- 예시: `frontend/src/pages/MainPage.tsx`
-- 예시: `frontend/src/features/calendar/components/MonthlyCalendar.tsx`
-- 예시: `frontend/src/features/calendar/components/CalendarCell.tsx`
-- 예시: `frontend/src/features/calendar/components/CalendarHeader.tsx`
-- 예시: `frontend/src/features/calendar/components/CalendarDayPopup.tsx`
-- 예시: `frontend/src/features/calendar/hooks/useCalendar.ts`
-- 예시: `frontend/src/features/calendar/stores/calendarStore.ts`
-- 예시: `frontend/src/features/plans/components/WeeklyPlanBar.tsx`
-- 예시: `frontend/src/features/plans/components/TodayPlanList.tsx`
-- 예시: `frontend/src/features/plans/components/PlanCard.tsx`
-- 예시: `frontend/src/features/plans/components/PlanDetailModal.tsx`
-- 예시: `frontend/src/features/plans/components/CreatePlanFAB.tsx`
-- 예시: `frontend/src/features/plans/api/getPlans.ts`
-- 예시: `frontend/src/features/plans/api/getPlan.ts`
-- 예시: `frontend/src/features/plans/api/completePlan.ts`
-- 예시: `frontend/src/features/plans/hooks/usePlans.ts`
-- 예시: `frontend/src/features/plans/hooks/usePlan.ts`
-- 예시: `frontend/src/features/plans/hooks/useCompletePlan.ts`
-- 예시: `frontend/src/features/plans/stores/planStore.ts`
-- 예시: `frontend/src/components/ui/Modal.tsx`
-- 예시: `frontend/src/components/ui/Checkbox.tsx`
-- 예시: `frontend/src/components/ui/Badge.tsx`
-- 예시: `frontend/src/components/ui/FAB.tsx`
-- 예시: `frontend/src/components/ui/Avatar.tsx`
-- 예시: `frontend/src/components/ui/Chip.tsx`
-- 예시: `frontend/e2e/main.spec.ts`
+**생성 (frontend/tests):** `tests/unit/calendar/{dday,kst}.test.ts` · `tests/unit/plans/{partition,PlanCard}.test.tsx` (RTL — 러너 미설치, 파일만)
+
+**수정:** `pages/MainPage.tsx` — 자리표시자 → 캘린더→주간→오늘 + FAB + 상태 조립
+
+> 백엔드/Prisma/마이그레이션 무수정. docs는 본 progress.md만 수정. 새 npm 의존성 없음(date-fns 기설치).
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+npm run typecheck   # PASS — frontend + backend 0 에러
+npm run lint        # PASS — 0 에러·0 warning
+cd backend && node ../node_modules/vitest/vitest.mjs run   # PASS — 10파일 107건
+cd frontend && node ../node_modules/vite/bin/vite.js build # PASS — 209 modules
+# Playwright E2E: 백(4000)+프(5173) 기동 + 테스트 사용자에 일정 5건 API 시드 후 검증
+```
 
-- 예시: `cd frontend && npm run test -- calendar`
-- 예시: `cd frontend && npx playwright test main.spec.ts`
-- 예시: `cd frontend && npm run typecheck`
+### 구현된 메인 페이지 영역
 
-### 검증 결과
+| 영역 | 구현 |
+|---|---|
+| 월간 캘린더 | 6×7 격자, `< YYYY년 M월 >` 월 이동, 오늘 셀 `bg-charcoal text-white rounded-full`, **dueDate 기준** 일정 배치(완료 포함), 카테고리 색상 점(8px, 최대 3 후 +N). 셀 클릭 → **읽기 전용** CalendarDayPopup(제목+Chip+시간, 외부클릭/ESC 닫기, 상세 모달 미연동) |
+| 주간 일정 바 | 이번 주 월~일(KST), 요일별 일정 개수 막대(오늘 `bg-charcoal`, 그 외 `bg-outline/30`, 최대 60px), 요일 클릭 시 해당일 일정 읽기 전용 확장 |
+| 오늘 할 일 | **displayDate==오늘(KST) & 미완료**, 항목=Checkbox+제목+Chip+시간+중요도+D-Day 배지. 빈 상태 "오늘 처리할 일정이 없습니다." + + 버튼 안내 |
+| FAB | `fixed bottom-6 right-6 w-14 h-14 rounded-full bg-charcoal text-white` → `/tasks/new`(폼은 Step 10) |
+| 상태 | 로딩 Spinner / 에러 메시지+"다시 시도" / 빈 상태 / 401은 httpClient refresh→실패 시 /login |
 
-- [ ] 메인 페이지 섹션 순서: 캘린더 → 주간 → 오늘 (K-05=B)
-- [ ] 월간 캘린더 6×7 격자 렌더링 확인
-- [ ] 이전/다음 월 이동 정상 동작
-- [ ] 캘린더 날짜 셀 클릭 → CalendarDayPopup 표시 확인
-- [ ] PlanCard 클릭 → URL `?planId=X` 추가 + PlanDetailModal 오픈 확인
-- [ ] PlanDetailModal 닫기 → URL에서 planId 제거 확인
-- [ ] planStore에 planDetailId 상태 없음 확인 (URL이 SSoT, K-08=B)
-- [ ] 완료 토글: 낙관적 업데이트 (즉시 중간줄+회색), API 성공 후 목록 최하위 이동
-- [ ] 완료 토글: API 실패 시 롤백 + 에러 토스트 확인
-- [ ] D-Day 배지 표시 조건 확인 (D-Day/D-1/D-3/마감 지남/날짜 문자열)
-- [ ] 카테고리 색상 점 표시 (컬러풀 5색, 그레이스케일 금지)
-- [ ] 오늘 할 일 빈 상태 메시지 표시 확인
-- [ ] Playwright P-01 시나리오 통과
-- [ ] Playwright P-03 시나리오 통과 (상세 모달 URL 연동)
-- [ ] Playwright P-04 시나리오 통과 (완료 토글 낙관적 업데이트)
-- [ ] validation.md §5·§10 기준 통과
+### 일정 API 연동 방식
+
+- `GET /api/v1/plans` **쿼리 무지정**(month·completed 미사용) → 사용자 전체 미삭제 일정 1회 조회 후 클라이언트 파티션. (캘린더=dueDate, API month 필터=displayDate 불일치 회피 — 정확성 우선). queryKey `['plans']`, staleTime 30s.
+- `PATCH /api/v1/plans/:id/complete` — `useCompletePlan` mutation, 성공 시 `['plans']` 무효화(캘린더/주간/오늘 동시 갱신). **중복 클릭 방지:** TodayPlanList가 `pendingId` 추적, 해당 항목 isPending 중 체크박스 disable + 핸들러 조기 반환. 실패 시 에러 토스트.
+- 표준 success/error: `httpClient`(Bearer 자동, 401 refresh-retry) 재사용, ApiResponse 타입 가드.
+
+### 날짜 표시 기준
+
+- **캘린더 = dueDate**(완료 포함 표시) / **오늘 할 일 = displayDate==오늘 & 미완료**(완료 제외) / **주간 바 = displayDate**(PRD §24-1·AI-19 "주간 바 기준 display_date"). 모든 "오늘"은 KST(+09:00 고정) `lib/date/kst.ts`로 계산(브라우저 TZ 비의존). D-Day = dueDate−오늘(KST) diff → §10 배지.
+
+### Playwright 검증 결과 (2026-05-21, 백+프 기동, 일정 5건 시드 후 실측 E2E)
+
+| 흐름 | 결과 | 근거 |
+|---|---|---|
+| 로그인 후 / 접근 | PASS | Step 8 로그인 → / 진입(회귀 무) |
+| 메인 페이지 렌더 | PASS | 캘린더→주간→오늘 순서, FAB |
+| 캘린더 영역 | PASS | dueDate 기준 18·21·22·24·28일 각 1건, 셀 클릭 읽기전용 팝업("5월 24일 일정"=데이터베이스 복습) |
+| 오늘 할 일 영역 | PASS | displayDate==21 미완료 3건, D-Day 배지(D-Day/D-3/날짜) 정확 |
+| 주간 일정 바 | PASS | displayDate 기준 월1·수1·목3 |
+| 일정 완료 토글 | PASS | 영상처리 완료 → 오늘 3→2건(제외), 캘린더 21일 1건 유지(완료도 표시), 주간 목 3건 유지 |
+| 새로고침 후 상태 유지 | PASS | 완료 상태 백엔드 영속, 재진입 시 동일, **콘솔 에러 0** |
+| 콘솔 에러 | PASS | 로그인 후/새로고침 0건. 비로그인 부트스트랩 refresh 401만(기대됨). React Router v7 경고 1건(정보성) |
+| Step 8 회귀 | PASS | 로그인 흐름 정상 동작 |
 
 ### 남은 문제
 
-- 없음
+- **프론트 단위 테스트 러너 미설치(비차단, Step 8과 동일).** D-Day/KST/파티션/PlanCard RTL 테스트 파일 작성 완료, 실행은 러너(vitest+jsdom+RTL) 설정 후 가능. `tsconfig include`가 `["src"]`라 typecheck/build 무영향. 가짜 통과 처리 없음.
+- 검증용으로 dev DB(gitignore)에 테스트 사용자의 일정 5건 생성 + 1건 완료 — 개발 DB 산출물(무해).
+
+### 다음 Step에서 해야 할 일 (Step 10 — 할 일 등록/수정 페이지)
+
+- `/tasks/new` 등록 폼(PlanForm: title/dueDate/dueTime/displayDate/category/priority/memo/isRemind), display_date 기본=due_date 연동, display_date>due_date 422 UI.
+- createPlan/updatePlan/deletePlan API + useCreatePlan/useUpdatePlan/useDeletePlan. (수정·삭제 진입은 일정 상세 UI와 함께 — 상세 모달은 Step 10/후속에서 함께 도입 검토.)
+- Playwright P-02 통과.
 
 ---
 
