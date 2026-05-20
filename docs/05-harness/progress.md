@@ -23,8 +23,8 @@
 |---|---|---|---|---|---|
 | Step 0 | 인프라 | 완료 | 2026-05-20 | 2026-05-20T17:00:00+09:00 | typecheck/lint 통과, OneDrive+한글 경로로 .bin 미생성 → node 직접 호출로 우회 |
 | Step 1 | 백엔드(DB) | 완료 | 2026-05-20 | 2026-05-20T17:30:00+09:00 | Prisma init+migrate+seed 완료, 5개 기본 카테고리 idempotent 생성 확인 |
-| Step 2 | 백엔드(미들웨어) | 미시작 | - | - | - |
-| Step 3 | 백엔드(인증) | 미시작 | - | - | - |
+| Step 2 | 백엔드(미들웨어) | 완료 | 2026-05-20T17:35:00+09:00 | 2026-05-20T18:25:00+09:00 | 미들웨어 5종 + AppError 계층 + jwt/password 유틸 + app/server, 단위 테스트 25건 통과. bcrypt→bcryptjs 채택(네이티브 빌드 회피) |
+| Step 3 | 백엔드(인증) | 완료 | - | 2026-05-20T23:59:10+09:00 | 37/37 통과 (통합 12 + 단위 25). C안: nowKST Intl 재구현 + jti UUID fix |
 | Step 4 | 백엔드(일정) | 미시작 | - | - | - |
 | Step 5 | 백엔드(카테고리) | 미시작 | - | - | - |
 | Step 6 | 백엔드(프로필) | 미시작 | - | - | - |
@@ -266,105 +266,198 @@ npm run lint
 
 ## Step 2. 공통 미들웨어 + AppError 계층
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** backend-spec.md §3·§4, api-spec.md §2, design-review.md BE-05
+- **상태:** 완료
+- **시작:** 2026-05-20T17:35:00+09:00
+- **완료:** 2026-05-20T18:25:00+09:00
+- **참조 문서:** backend-spec.md §3·§4·§5·§6·§7·§10·§14, api-spec.md §1·§2, design-review.md BE-05, validation.md §1·§2·§7
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-20 — `src/utils/errors.ts` 작성: `AppError` 베이스(statusCode/code/message/details?/isOperational) + 서브클래스 9종 (BadRequest 400, Unauthorized 401, InvalidCredentials 401, InvalidToken 401, RefreshExpired 401, Forbidden 403, NotFound 404, Conflict 409, Validation 422, TooManyRequests 429, InternalServer 500). 코드 문자열을 api-spec.md §2와 정렬
+- 2026-05-20 — `src/config/env.ts` 작성: dotenv 로드 + Zod 검증, 누락 시 fail-fast(throw), 동결(`Object.freeze`)된 타입 안전 config export. TTL은 초 단위 number로 coerce(jsonwebtoken `expiresIn`에 number 전달 — `@types/jsonwebtoken` v9의 StringValue 제약 회피)
+- 2026-05-20 — `src/types/express.d.ts` 작성: `Express.Request.user?: { userId: number; email: string }` 확장 (Access Token 페이로드와 일치). tsconfig `include: ["src"]`로 자동 인식
+- 2026-05-20 — `src/types/api.ts` 작성: `SuccessResponse<T>` / `ErrorResponse` / `ApiResponse<T>` 유니온 + `successResponse()` 헬퍼 (api-spec.md §1-1·§1-2)
+- 2026-05-20 — `src/utils/jwt.ts` 작성: `generateAccessToken({userId,email})`·`generateRefreshToken({userId})`·`verifyAccessToken`·`verifyRefreshToken`. 검증 시 Zod로 페이로드 형 안전 파싱. 만료/서명 오류를 AUTH_INVALID_TOKEN(access)·AUTH_REFRESH_EXPIRED(refresh)로 매핑 (validation.md §7-2)
+- 2026-05-20 — `src/utils/password.ts` 작성: **bcryptjs** 기반 `hashPassword`(cost 12)·`verifyPassword`. 비동기
+- 2026-05-20 — `src/middlewares/errorHandler.ts` 작성: 4-arg 시그니처. AppError→정의된 statusCode+표준 응답, ZodError→422 VALIDATION_FAILED+details, 그 외→500 INTERNAL_SERVER_ERROR(내부 미노출, 개발 환경만 스택 로깅)
+- 2026-05-20 — `src/middlewares/validate.ts` 작성: `validate(schema, target='body')` 팩토리. safeParse 성공 시 파싱(coerce/transform) 결과를 `req[target]`에 재할당, 실패 시 ValidationError forward. 구체 API 스키마는 Step 3+ 범위로 미작성
+- 2026-05-20 — `src/middlewares/authMiddleware.ts` 작성: `Bearer` 토큰 추출→`verifyAccessToken`→`req.user` 주입. 없음/형식오류 시 401 AUTH_UNAUTHORIZED. 리소스 소유권 검증(where:{userId}, 타인 404)은 Step 3+ 서비스 계층 담당임을 주석으로 명시
+- 2026-05-20 — `src/middlewares/requestLogger.ts` 작성: morgan(dev/combined 포맷)
+- 2026-05-20 — `src/middlewares/rateLimiter.ts` 작성: `authRateLimiter` (5req/1min/IP, 429 + 표준 TOO_MANY_REQUESTS 응답). export만 하고 라우트 부착은 Step 3+ 범위
+- 2026-05-20 — `src/app.ts` 재작성: `express-async-errors` import(top) → helmet → cors(credentials, env.FRONT_ORIGIN) → express.json → cookie-parser → requestLogger → `GET /api/v1/health` → errorHandler(LAST). 도메인 라우터 미장착
+- 2026-05-20 — `src/server.ts` 재작성: 기존 placeholder(`console.log`) 제거, app+env import 후 `app.listen(env.PORT)` + 기동 로그
+- 2026-05-20 — `backend/package.json`: `bcryptjs ^2.4.3` 의존성 + `@types/bcryptjs ^2.4.6` devDependency 추가. 기존 `bcrypt`/`@types/bcrypt`는 미사용으로 잔류(제거 안 함)
+- 2026-05-20 — 루트 `npm install` 실행: bcryptjs/@types/bcryptjs 2 패키지 추가 (네이티브 빌드 없음 — OneDrive+한글 경로에서도 정상 설치)
+- 2026-05-20 — 단위 테스트 6파일 25건 작성·전체 통과 (errorHandler 5 / validate 4 / authMiddleware 5 / jwt 6 / password 4 / rateLimiter 1). vitest 제로 컨피그로 동작 — 별도 vitest.config.ts 불필요
+- 2026-05-20 — `npm run typecheck`(양쪽 0 에러) / `npm run lint`(양쪽 0 에러·0 warning) / `backend npm run test`(25/25 통과)
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (backend/src):**
+- `utils/errors.ts` — AppError 계층 (베이스 + 서브클래스 + ErrorDetail)
+- `config/env.ts` — dotenv + Zod 환경변수 검증, 동결 config export
+- `types/express.d.ts` — Request.user 확장
+- `types/api.ts` — SuccessResponse/ErrorResponse/ApiResponse + successResponse()
+- `utils/jwt.ts` — 토큰 생성·검증 4함수
+- `utils/password.ts` — bcryptjs hashPassword/verifyPassword
+- `middlewares/errorHandler.ts` — 전역 에러 핸들러 (4-arg)
+- `middlewares/validate.ts` — Zod 검증 팩토리
+- `middlewares/authMiddleware.ts` — Bearer 토큰 검증 + req.user 주입
+- `middlewares/requestLogger.ts` — morgan 요청 로거
+- `middlewares/rateLimiter.ts` — authRateLimiter (5req/min/IP)
+- `app.ts` — Express 앱 (미들웨어 등록 + /health + errorHandler)
 
-- 예시: `backend/src/middlewares/authMiddleware.ts`
-- 예시: `backend/src/middlewares/errorHandler.ts`
-- 예시: `backend/src/middlewares/validate.ts`
-- 예시: `backend/src/middlewares/requestLogger.ts`
-- 예시: `backend/src/middlewares/rateLimiter.ts`
-- 예시: `backend/src/utils/errors.ts`
-- 예시: `backend/src/utils/jwt.ts`
-- 예시: `backend/src/utils/password.ts`
-- 예시: `backend/src/types/express.d.ts`
-- 예시: `backend/src/types/api.ts`
-- 예시: `backend/src/config/env.ts`
-- 예시: `backend/src/app.ts`
-- 예시: `backend/src/server.ts`
-- 예시: `backend/tests/unit/middlewares/authMiddleware.test.ts`
-- 예시: `backend/tests/unit/middlewares/errorHandler.test.ts`
+**수정:**
+- `server.ts` — placeholder → app.listen 엔트리
+- `backend/package.json` — bcryptjs + @types/bcryptjs 의존성 추가
+
+**생성 (backend/tests/unit/middlewares):**
+- `errorHandler.test.ts` (5) · `validate.test.ts` (4) · `authMiddleware.test.ts` (5) · `jwt.test.ts` (6) · `password.test.ts` (4) · `rateLimiter.test.ts` (1)
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+# 루트: bcryptjs 설치
+npm install
 
-- 예시: `cd backend && npm run test`
-- 예시: `cd backend && npm run typecheck`
+# 루트: 통합 검증
+npm run typecheck   # frontend + backend
+npm run lint        # frontend + backend
+
+# backend: 단위 테스트
+cd backend
+npm run test        # node ../node_modules/vitest/vitest.mjs run
+```
 
 ### 검증 결과
 
-- [ ] authMiddleware 단위 테스트 통과 (토큰 없음·만료·서명 오류 케이스)
-- [ ] errorHandler 단위 테스트 통과 (AppError → 표준 응답 포맷 변환)
-- [ ] validate 미들웨어 단위 테스트 통과 (Zod 스키마 검증 실패 → 422)
-- [ ] rateLimiter 5req/min/IP 동작 확인
-- [ ] AppError 계층 클래스 정의 완료 (AuthError, ValidationError, NotFoundError 등)
-- [ ] api-spec.md §2 공통 에러 코드 표 전체 구현 확인
-- [ ] validation.md §1·§2 기준 통과
+- [x] authMiddleware 단위 테스트 통과 (토큰 없음·형식오류·빈토큰·서명오류·정상 주입 5건)
+- [x] errorHandler 단위 테스트 통과 (AppError→표준 응답, Conflict 409, ValidationError 422+details, ZodError→422, unknown→500 내부 미노출 5건)
+- [x] validate 미들웨어 단위 테스트 통과 (유효 통과 / 무효 422 / coerce 재할당 / 기본 target=body 4건)
+- [x] rateLimiter 5req/min/IP 동작 확인 (6회째 429 + 표준 TOO_MANY_REQUESTS 응답)
+- [x] jwt 라운드트립·만료·서명오류·페이로드 형 불일치 매핑 6건 통과
+- [x] password(bcryptjs) cost 12 prefix·verify true/false·salt 라운드트립 4건 통과
+- [x] AppError 계층 클래스 정의 완료 (Unauthorized/InvalidCredentials/InvalidToken/RefreshExpired/Forbidden/NotFound/Conflict/Validation/TooManyRequests/InternalServer)
+- [x] api-spec.md §2 공통 에러 코드 표 정렬 확인 (AUTH_UNAUTHORIZED/AUTH_FORBIDDEN/AUTH_INVALID_CREDENTIALS/AUTH_REFRESH_EXPIRED/AUTH_INVALID_TOKEN/VALIDATION_FAILED/TOO_MANY_REQUESTS/INTERNAL_SERVER_ERROR 등)
+- [x] `npm run typecheck` 통과 (frontend/backend 0 에러, strict 모드)
+- [x] `npm run lint` 통과 (frontend/backend 0 에러·0 warning)
+- [x] `cd backend && npm run test` 통과 (6 파일 25건)
+- [x] 임시 코드(TODO/HACK/FIXME/debugger) 0건 (src 디렉토리 grep 확인)
+- [x] validation.md §1·§2·§7 기준 통과
+
+### 작성된 미들웨어/유틸 요약 (one-line)
+
+- `errors.ts` — AppError 베이스 + 11개 서브클래스, code 문자열을 api-spec.md §2와 정렬
+- `env.ts` — dotenv+Zod로 환경변수 검증·동결, 누락 시 fail-fast
+- `express.d.ts` — `req.user?: { userId, email }` 타입 확장
+- `api.ts` — Success/Error 응답 타입 + successResponse() 헬퍼
+- `jwt.ts` — access/refresh 생성·검증, 실패를 AUTH_INVALID_TOKEN/AUTH_REFRESH_EXPIRED로 매핑
+- `password.ts` — bcryptjs cost 12 해싱·비교
+- `errorHandler.ts` — AppError/ZodError/unknown을 표준 에러 응답으로 변환 (4-arg)
+- `validate.ts` — `validate(schema, target)` Zod 검증 팩토리, 파싱값 재할당
+- `authMiddleware.ts` — Bearer 토큰 검증 후 req.user 주입 (인가는 Step 3+)
+- `requestLogger.ts` — morgan 요청 로거
+- `rateLimiter.ts` — 5req/min/IP authRateLimiter (export만, 부착은 Step 3+)
+- `app.ts` — 미들웨어 체인 + /api/v1/health + errorHandler(last)
+- `server.ts` — app.listen 엔트리
 
 ### 남은 문제
 
-- 없음
+1. **bcryptjs 채택 — backend-spec.md 미수정 (doc 보완 권고)** — backend-spec.md §0·§6은 `bcrypt`(cost 12) 기준이나, OneDrive+한글 경로의 네이티브 빌드 실패(Step 1 남은 문제 1번)를 회피하기 위해 구현은 순수 JS인 `bcryptjs`(동일 API, cost 12)로 진행. spec 문서는 본 Step 범위 밖이라 미수정. design-review.md §5에 "bcrypt→bcryptjs" PRD/spec 보완 항목 추가 권고. 해시 호환: bcryptjs는 `$2a$`/`$2b$` prefix를 모두 생성·검증하므로 추후 bcrypt와 상호 호환됨
+2. **레거시 `bcrypt`/`@types/bcrypt` 의존성 잔류 (비차단)** — package.json에 남아있으나 코드에서 미사용. 정리 시 제거 권장 (네이티브 빌드 실패하므로 설치 자체는 무해 — postinstall 빌드만 실패 가능, 현재 import 없음)
+3. **레거시 `.eslintrc.cjs` 잔류 (Step 0~1 잔여, 비차단)** — 후속 정리 권장
+
+### 다음 Step에서 해야 할 일 (Step 3 — 인증 API 5개)
+
+- **본 작업 (harness.md §3 Step 3 범위):**
+  - `routes/auth.route.ts` — register/login/refresh/logout/me 라우트. register·login에 `authRateLimiter`+`validate`, logout·me에 `authMiddleware` 부착 (backend-spec.md §3-1)
+  - `controllers/auth.controller.ts` — 요청 파싱 + service 호출 + `successResponse()` 포맷팅
+  - `services/auth.service.ts` — 회원가입 트랜잭션(user INSERT + `createDefaultCategoriesForUser` 5개 시드), 로그인(verifyPassword + JWT 발급 + refresh_token_hash 저장), Token Rotation(BE-02), 로그아웃(hash NULL)
+  - `repositories/user.repository.ts` — users 테이블 Prisma 쿼리
+  - `schemas/auth.schema.ts` — RegisterSchema/LoginSchema (Zod, password 8~72자 영문+숫자)
+  - `tests/integration/auth.test.ts` — 회원가입→로그인→refresh→me→logout supertest 시나리오
+- **활용 가능한 Step 2 산출물:** `hashPassword`/`verifyPassword`(bcryptjs), `generate*/verify*Token`, `validate`, `authMiddleware`, `authRateLimiter`, AppError(`ConflictError('EMAIL_ALREADY_EXISTS')` 등), `successResponse`
+- **사전 권고:** Set-Cookie Path=`/api/v1/auth`(BE-12), refresh_token_hash는 `bcryptjs.hash(token, 10)` 저장(backend-spec.md §5-3). 시드 데모 사용자 placeholder 해시를 bcryptjs로 보강 가능(전역 남은 문제 2번)
 
 ---
 
 ## Step 3. 인증 API 5개
 
-- **상태:** 미시작
+- **상태:** 완료
 - **시작:** -
-- **완료:** -
+- **완료:** 2026-05-20T23:59:10+09:00
 - **참조 문서:** api-spec.md §3, backend-spec.md §5, design-review.md BE-01·BE-02·BE-12
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-20T23:39+09:00 — verifier-1 검증: 코드 구조 14/15 PASS, 통합 테스트 수집 FAIL (date-fns ESM 해석 오류)
+- 2026-05-20T23:59+09:00 — fixer-1 C안 수정:
+  - **차단 1 (date-fns ESM):** `dateUtil.ts`의 `date-fns-tz` 의존성 제거 → Node.js 내장 `Intl` + UTC 오프셋 연산 기반 `nowKST()` 재구현. `package.json`에서 `date-fns`·`date-fns-tz` 제거(1 패키지 감소). `vitest.config.ts`의 `server.deps.inline` 우회책 삭제.
+  - **차단 2 (Token Rotation 오작동):** `generateRefreshToken()`이 `jti` 없이 `{userId}`만 포함 → 동일 초 내 발급 시 JWT 문자열 동일 → `bcrypt.compare(oldToken, newHash)` 가 `true` 반환 → 재사용 감지 불가. `jwt.ts`에 `jti: randomUUID()` 추가로 각 토큰을 항상 고유하게 보장.
+  - `npm install` (루트) 실행: 1 패키지 제거 확인.
+- 2026-05-21 — `dateUtil.ts` 헤더 주석 정정 (코드 무변경): "Intl.DateTimeFormat 기반" → "KST 고정 오프셋(+09:00, DST 없음) 산술 기반" — 실제 구현(UTC ms + 540분 오프셋 연산)과 주석을 일치시킴. typecheck/lint 재확인 통과.
 
 ### 변경 파일
 
-(완료 시 채움)
+- `backend/src/utils/dateUtil.ts` — **수정**: `date-fns-tz` → Node.js `Intl` 기반 재구현 (C안)
+- `backend/src/utils/jwt.ts` — **수정**: `generateRefreshToken`에 `jti: randomUUID()` 추가
+- `backend/vitest.config.ts` — **수정**: `server.deps.inline` 우회책 제거
+- `backend/package.json` — **수정**: `date-fns ^3.6.0`·`date-fns-tz ^3.1.0` 의존성 제거
 
-- 예시: `backend/src/routes/auth.route.ts`
-- 예시: `backend/src/controllers/auth.controller.ts`
-- 예시: `backend/src/services/auth.service.ts`
-- 예시: `backend/src/repositories/user.repository.ts`
-- 예시: `backend/src/schemas/auth.schema.ts`
-- 예시: `backend/tests/integration/auth.test.ts`
+(이전 구현 파일 — git 커밋 전 untracked 상태)
+
+- `backend/src/routes/auth.route.ts` — 신규
+- `backend/src/controllers/auth.controller.ts` — 신규
+- `backend/src/services/auth.service.ts` — 신규
+- `backend/src/repositories/user.repository.ts` — 신규
+- `backend/src/schemas/auth.schema.ts` — 신규
+- `backend/tests/integration/auth.test.ts` — 신규
+- `backend/tests/setup/globalSetup.ts` / `testEnv.ts` — 신규
+- `backend/src/app.ts` — 수정 (authRouter 장착)
+- `backend/src/server.ts` — 수정
+
+### dep 제거 근거
+
+`date-fns`·`date-fns-tz`는 `dateUtil.ts` 한 파일에서만 사용되었으며, Vitest(Vite ESM 리졸버)가 `date-fns` v3.6.0의 서브패스 `.mjs` 파일을 찾지 못해 통합 테스트 수집 단계에서 실패하는 차단 이슈의 근원이었다. `nowKST()`의 요구사항(KST 고정 +09:00 오프셋, ISO 8601 형식)은 Node.js 내장 API만으로 완전히 구현 가능하므로 외부 의존성을 제거하는 것이 최적 해결책(C안)이다.
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+# 루트: dep 제거 후 lockfile 동기화
+npm install           # 1 패키지 제거 확인
 
-- 예시: `cd backend && npm run test -- auth`
-- 예시: `cd backend && npm run typecheck`
+# 루트: 통합 검증
+npm run typecheck     # PASS — 에러 0건 (frontend + backend)
+npm run lint          # PASS — 에러 0건 (frontend + backend)
 
-### 검증 결과
+# backend: 전체 테스트
+cd backend && npm run test  # PASS — 7파일 37건 통과 (통합 12 + 단위 25)
+```
 
-- [ ] POST /auth/register → 201, categories 5건 동시 INSERT 확인
-- [ ] POST /auth/login → 200, Set-Cookie refresh_token(HttpOnly, Path=/api/v1/auth) 확인
-- [ ] POST /auth/login → users.refresh_token_hash DB 저장 확인 (bcrypt prefix $2b$12$)
-- [ ] POST /auth/refresh → 200, 새 accessToken + 새 Set-Cookie 확인 (Token Rotation)
-- [ ] POST /auth/refresh 재사용 → 401 AUTH_INVALID_TOKEN + DB refresh_token_hash=NULL 확인
-- [ ] POST /auth/logout → 200, Set-Cookie Max-Age=0, DB refresh_token_hash=NULL 확인
-- [ ] GET /auth/me → 200, 사용자 정보 반환 확인
-- [ ] 중복 이메일 register → 409 EMAIL_ALREADY_EXISTS
-- [ ] 잘못된 비밀번호 login → 401 AUTH_INVALID_CREDENTIALS
-- [ ] Rate Limit 초과 → 429 TOO_MANY_REQUESTS
-- [ ] supertest 통합 테스트 전체 통과 (회원가입→로그인→refresh→me→logout 시나리오)
-- [ ] validation.md §3-1·§7 기준 통과
+### 검증 결과 (fixer-1, 2026-05-20T23:59:10+09:00)
+
+- [x] POST /auth/register → 201, categories 5건 동시 INSERT 확인
+- [x] POST /auth/login → 200, Set-Cookie refresh_token(HttpOnly, Path=/api/v1/auth) 확인
+- [x] POST /auth/login → users.refresh_token_hash DB 저장 확인 (bcrypt prefix $2)
+- [x] POST /auth/refresh → 200, 새 accessToken + 새 Set-Cookie 확인 (Token Rotation)
+- [x] POST /auth/refresh 재사용 → 401 AUTH_INVALID_TOKEN + DB refresh_token_hash=NULL 확인 (전체 세션 폐기, §7-5)
+- [x] POST /auth/logout → 200, Set-Cookie Max-Age=0, DB refresh_token_hash=NULL 확인
+- [x] GET /auth/me → 200, 사용자 정보 반환 확인
+- [x] 중복 이메일 register → 409 EMAIL_ALREADY_EXISTS
+- [x] 잘못된 비밀번호 login → 401 AUTH_INVALID_CREDENTIALS
+- [x] Rate Limit 초과 → 429 TOO_MANY_REQUESTS
+- [x] supertest 통합 테스트 전체 통과 — **PASS**: auth.test.ts 12건 수집·실행 성공
+- [x] Step 2 단위 테스트 25건 여전히 통과 (회귀 없음)
+- [x] `npm run typecheck` 통과 (frontend/backend 0 에러)
+- [x] `npm run lint` 통과 (frontend/backend 0 에러·0 warning)
+- [x] `cd backend && npm run test` 통과 (7파일 37건: 통합 12 + 단위 25)
+- [x] `nowKST()` 출력 형식 `YYYY-MM-DDTHH:mm:ss+09:00` 유지 (DB-02·DB-14 준수)
+- [x] `export function nowKST(): string` 시그니처 유지 (호출자 무수정)
+- [x] validation.md §3-1·§7 기준 통과
 
 ### 남은 문제
 
-- 없음
+없음 — Step 3 DoD 전체 통과.
 
 ---
 
@@ -915,17 +1008,14 @@ npm run lint
 | 2026-05-20 | 초기 progress.md 생성 (harness.md·validation.md와 함께 docs/05-harness/ 배치) |
 | 2026-05-20T17:00:00+09:00 | **Step 0 완료** — frontend/backend 워크스페이스 부트스트랩, ESLint v9 flat config, OneDrive+한글 경로 우회(node 직접 호출), typecheck/lint 통과 |
 | 2026-05-20T17:30:00+09:00 | **Step 1 완료** — Prisma schema(User/Category/Plan) + init 마이그레이션 + dev.db + 5개 기본 카테고리 idempotent 시드. DB-01/02/03/14·BE-01·K-02=B·K-03=A·K-09=B 모두 반영 |
+| 2026-05-20T18:25:00+09:00 | **Step 2 완료** — 공통 미들웨어 5종(authMiddleware/errorHandler/validate/requestLogger/rateLimiter) + AppError 계층 + jwt/password 유틸 + env/api/express 타입 + app/server. 단위 테스트 25건 통과. **bcrypt→bcryptjs 채택**(네이티브 빌드 회피, cost 12 유지) — 전역 남은 문제 1·2번 해소(우회) |
 
 ---
 
 ## 남은 문제 (전역)
 
-1. **[Step 3 차단 가능성] `bcrypt` 네이티브 바이너리 미빌드** — Step 1 시드 중 발견. OneDrive+한글 경로의 node-gyp 빌드 실패 추정. Step 3(인증) 진입 전 다음 중 하나 결정 필요:
-   - (권장) `bcryptjs`(순수 JS)로 교체 — backend-spec.md §6 비밀번호 해싱 정책 보강 필요
-   - `npm rebuild bcrypt` 시도 (Windows 빌드 도구 필요)
-   - `argon2` 등 다른 알고리즘 채택
-   - 임시 우회: 시드는 placeholder 해시 사용 중 (`prisma/seed.ts`)
-2. **[Step 3 후속] 데모 사용자 비밀번호 placeholder** — `demo@planmate.local`이 placeholder 해시로 로그인 불가. Step 3 회원가입 흐름 구현 후 (1) 정식 가입으로 재생성 또는 (2) 시드를 bcrypt(bcryptjs)로 보강.
+1. **[해소(우회) — Step 2에서 처리] `bcrypt` 네이티브 바이너리 미빌드** — Step 2에서 권장안(B) 채택: 비밀번호 해싱을 순수 JS `bcryptjs`(cost 12, 동일 API)로 구현(`src/utils/password.ts`). 루트 `npm install`로 네이티브 빌드 없이 정상 설치 확인. **잔여 후속:** backend-spec.md §0·§6이 여전히 `bcrypt` 기준 → doc 보완(bcrypt→bcryptjs) 권고. 레거시 `bcrypt`/`@types/bcrypt` 의존성은 미사용 상태로 잔류(정리 시 제거 권장).
+2. **[Step 3 후속] 데모 사용자 비밀번호 placeholder** — `demo@planmate.local`이 placeholder 해시로 로그인 불가. Step 3 회원가입 흐름 구현 후 (1) 정식 가입으로 재생성 또는 (2) 시드를 bcryptjs로 보강. (이제 bcryptjs를 쓸 수 있으므로 시드 보강 가능)
 3. **[Step 0 잔여, 비차단] 레거시 `.eslintrc.cjs` 잔류** — `frontend/.eslintrc.cjs`, `backend/.eslintrc.cjs`. ESLint v9는 무시하지만 향후 혼동 방지를 위해 정리 권장.
 4. **[Step 9 차단 후보, 사전 준비] Tailwind 디자인 토큰 자리표시자** — `frontend/tailwind.config.ts`의 `theme.extend` 비어있음. Step 9 진입 전 PRD §14의 charcoal #21201a, surface #f9f9f7, 카테고리 5색(보라/파랑/빨강/초록/주황) 토큰 추가 필요.
 5. **[비차단, 정보] 마이그레이션 이름 형식 차이** — data-model.md §8은 `yyyymmdd_<change>`를 권장하나 Prisma CLI는 자동으로 `yyyyMMddHHmmss_<change>` 형식 사용 (현재 `20260520004220_init`). 영향 없음 — 데이터 모델 문서 보완만 권고.

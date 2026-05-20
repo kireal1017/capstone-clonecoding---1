@@ -1,0 +1,388 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779285818513,
+  "projectRoot": "C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": null,
+    "scripts": {
+      "typecheck:frontend": "node ./node_modules/typescript/bin/tsc -p frontend/tsconfig.json --noEmit",
+      "typecheck:backend": "node ./node_modules/typescript/bin/tsc -p backend/tsconfig.json --noEmit",
+      "typecheck": "npm run typecheck:frontend && npm run typecheck:backend",
+      "lint:frontend": "node ./node_modules/eslint/bin/eslint.js --config frontend/eslint.config.mjs frontend --max-warnings=0",
+      "lint:backend": "node ./node_modules/eslint/bin/eslint.js --config backend/eslint.config.mjs backend --max-warnings=0",
+      "lint": "npm run lint:frontend && npm run lint:backend",
+      "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"**/*.{ts,tsx,js,json,md}\"",
+      "dev:frontend": "npm --workspace frontend run dev",
+      "dev:backend": "npm --workspace backend run dev"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [
+      "frontend",
+      "backend"
+    ],
+    "mainDirectories": [
+      "docs"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "backend": {
+      "path": "backend",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1779285818470,
+      "keyFiles": [
+        "eslint.config.mjs",
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 0,
+      "lastAccessed": 1779285818470,
+      "keyFiles": []
+    },
+    "frontend": {
+      "path": "frontend",
+      "purpose": null,
+      "fileCount": 10,
+      "lastAccessed": 1779285818471,
+      "keyFiles": [
+        "eslint.config.mjs",
+        "index.html",
+        "package.json",
+        "postcss.config.js",
+        "tailwind.config.ts"
+      ]
+    },
+    "backend\\node_modules": {
+      "path": "backend\\node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 0,
+      "lastAccessed": 1779285818474,
+      "keyFiles": []
+    },
+    "backend\\src": {
+      "path": "backend\\src",
+      "purpose": "Source code",
+      "fileCount": 1,
+      "lastAccessed": 1779285818475,
+      "keyFiles": [
+        "server.ts"
+      ]
+    },
+    "frontend\\src": {
+      "path": "frontend\\src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1779285818476,
+      "keyFiles": [
+        "App.tsx",
+        "main.tsx",
+        "vite-env.d.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "docs\\05-harness\\progress.md",
+      "accessCount": 22,
+      "lastAccessed": 1779290990493,
+      "type": "file"
+    },
+    {
+      "path": "backend\\package.json",
+      "accessCount": 8,
+      "lastAccessed": 1779288844189,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\utils\\dateUtil.ts",
+      "accessCount": 8,
+      "lastAccessed": 1779290930029,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 6,
+      "lastAccessed": 1779287995701,
+      "type": "directory"
+    },
+    {
+      "path": "backend\\src\\utils\\jwt.ts",
+      "accessCount": 6,
+      "lastAccessed": 1779289934243,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\server.ts",
+      "accessCount": 4,
+      "lastAccessed": 1779288015064,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src",
+      "accessCount": 4,
+      "lastAccessed": 1779288832814,
+      "type": "directory"
+    },
+    {
+      "path": "docs\\05-harness\\validation.md",
+      "accessCount": 3,
+      "lastAccessed": 1779287922495,
+      "type": "file"
+    },
+    {
+      "path": "backend\\vitest.config.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779288910223,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\utils\\password.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779288999541,
+      "type": "file"
+    },
+    {
+      "path": "docs\\05-harness\\harness.md",
+      "accessCount": 2,
+      "lastAccessed": 1779286169463,
+      "type": "file"
+    },
+    {
+      "path": "backend\\eslint.config.mjs",
+      "accessCount": 2,
+      "lastAccessed": 1779286180367,
+      "type": "file"
+    },
+    {
+      "path": "docs\\04-design\\api-spec.md",
+      "accessCount": 2,
+      "lastAccessed": 1779287922089,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\app.ts",
+      "accessCount": 2,
+      "lastAccessed": 1779287935848,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\authMiddleware.ts",
+      "accessCount": 2,
+      "lastAccessed": 1779287948652,
+      "type": "file"
+    },
+    {
+      "path": "backend",
+      "accessCount": 2,
+      "lastAccessed": 1779288833493,
+      "type": "directory"
+    },
+    {
+      "path": "backend\\src\\services\\auth.service.ts",
+      "accessCount": 2,
+      "lastAccessed": 1779288977679,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\integration\\auth.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1779288977987,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\controllers\\auth.controller.ts",
+      "accessCount": 2,
+      "lastAccessed": 1779288988357,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\repositories\\user.repository.ts",
+      "accessCount": 2,
+      "lastAccessed": 1779288999996,
+      "type": "file"
+    },
+    {
+      "path": "docs\\03-prd\\prd.md",
+      "accessCount": 1,
+      "lastAccessed": 1779285844546,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1779286092067,
+      "type": "file"
+    },
+    {
+      "path": "docs\\04-design\\backend-spec.md",
+      "accessCount": 1,
+      "lastAccessed": 1779286170394,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tsconfig.json",
+      "accessCount": 1,
+      "lastAccessed": 1779286180043,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\config\\prisma.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286186698,
+      "type": "file"
+    },
+    {
+      "path": "backend\\.env.example",
+      "accessCount": 1,
+      "lastAccessed": 1779286188410,
+      "type": "file"
+    },
+    {
+      "path": "backend\\.env",
+      "accessCount": 1,
+      "lastAccessed": 1779286188984,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\utils\\errors.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286219500,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\config\\env.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286236377,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\types\\express.d.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286244720,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\types\\api.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286256782,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\errorHandler.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286306527,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\validate.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286317207,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\requestLogger.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286359160,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\rateLimiter.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286367486,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\unit\\middlewares\\errorHandler.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286408162,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\unit\\middlewares\\validate.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286420178,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\unit\\middlewares\\rateLimiter.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286430174,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\unit\\middlewares\\jwt.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286445564,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\unit\\middlewares\\password.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286454716,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\unit\\middlewares\\authMiddleware.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779286467006,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\routes\\auth.route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779287929017,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\schemas\\auth.schema.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779287935285,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\setup\\globalSetup.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779287998647,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\setup\\testEnv.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779287999210,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

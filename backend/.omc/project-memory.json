@@ -1,0 +1,172 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1779287564640,
+  "projectRoot": "C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest\\backend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "express",
+        "version": "4.19.0",
+        "category": "backend"
+      },
+      {
+        "name": "vitest",
+        "version": "2.0.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "node ../node_modules/tsx/dist/cli.mjs watch src/server.ts",
+      "build": "node ../node_modules/typescript/bin/tsc -p tsconfig.json",
+      "start": "node dist/server.js",
+      "typecheck": "node ../node_modules/typescript/bin/tsc --noEmit",
+      "lint": "node ../node_modules/eslint/bin/eslint.js --config eslint.config.mjs . --max-warnings=0",
+      "test": "node ../node_modules/vitest/vitest.mjs run",
+      "prisma:generate": "node ../node_modules/prisma/build/index.js generate",
+      "prisma:migrate": "node ../node_modules/prisma/build/index.js migrate dev",
+      "prisma:migrate:deploy": "node ../node_modules/prisma/build/index.js migrate deploy",
+      "prisma:studio": "node ../node_modules/prisma/build/index.js studio",
+      "db:seed": "node ../node_modules/tsx/dist/cli.mjs prisma/seed.ts"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src",
+      "tests"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "prisma": {
+      "path": "prisma",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1779287564554,
+      "keyFiles": [
+        "dev.db",
+        "schema.prisma",
+        "seed.ts",
+        "test.db",
+        "test.db-journal"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1779287564555,
+      "keyFiles": [
+        "app.ts",
+        "server.ts"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1779287564573,
+      "keyFiles": []
+    },
+    "prisma\\migrations": {
+      "path": "prisma\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 1,
+      "lastAccessed": 1779287564574,
+      "keyFiles": [
+        "migration_lock.toml"
+      ]
+    },
+    "src\\config": {
+      "path": "src\\config",
+      "purpose": "Configuration files",
+      "fileCount": 2,
+      "lastAccessed": 1779287564575,
+      "keyFiles": [
+        "env.ts",
+        "prisma.ts"
+      ]
+    },
+    "src\\controllers": {
+      "path": "src\\controllers",
+      "purpose": "Controllers",
+      "fileCount": 1,
+      "lastAccessed": 1779287564576,
+      "keyFiles": [
+        "auth.controller.ts"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 1,
+      "lastAccessed": 1779287564577,
+      "keyFiles": [
+        "defaultCategories.ts"
+      ]
+    },
+    "src\\routes": {
+      "path": "src\\routes",
+      "purpose": "Route handlers",
+      "fileCount": 1,
+      "lastAccessed": 1779287564577,
+      "keyFiles": [
+        "auth.route.ts"
+      ]
+    },
+    "src\\schemas": {
+      "path": "src\\schemas",
+      "purpose": "Schema definitions",
+      "fileCount": 1,
+      "lastAccessed": 1779287564578,
+      "keyFiles": [
+        "auth.schema.ts"
+      ]
+    },
+    "src\\services": {
+      "path": "src\\services",
+      "purpose": "Business logic services",
+      "fileCount": 1,
+      "lastAccessed": 1779287564579,
+      "keyFiles": [
+        "auth.service.ts"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}
