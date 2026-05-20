@@ -19,7 +19,7 @@
   },
   "build": {
     "buildCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest\" && node ./node_modules/typescript/bin/tsc -p frontend/tsconfig.json --noEmit 2>&1 | head -60",
-    "testCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\" && node ../node_modules/vitest/vitest.mjs run 2>&1 | tail -25",
+    "testCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\" && node ../node_modules/vitest/vitest.mjs run 2>&1 | tail -30",
     "lintCommand": "npm run lint",
     "devCommand": null,
     "scripts": {
@@ -121,8 +121,8 @@
     },
     {
       "path": "docs\\04-design\\api-spec.md",
-      "accessCount": 29,
-      "lastAccessed": 1779305381805,
+      "accessCount": 31,
+      "lastAccessed": 1779306936617,
       "type": "file"
     },
     {
@@ -135,6 +135,12 @@
       "path": "backend\\src\\app.ts",
       "accessCount": 15,
       "lastAccessed": 1779298974935,
+      "type": "file"
+    },
+    {
+      "path": "docs\\05-harness\\harness.md",
+      "accessCount": 15,
+      "lastAccessed": 1779306929718,
       "type": "file"
     },
     {
@@ -154,12 +160,6 @@
       "accessCount": 9,
       "lastAccessed": 1779298991441,
       "type": "directory"
-    },
-    {
-      "path": "docs\\05-harness\\harness.md",
-      "accessCount": 8,
-      "lastAccessed": 1779305376444,
-      "type": "file"
     },
     {
       "path": "backend\\src\\utils\\jwt.ts",

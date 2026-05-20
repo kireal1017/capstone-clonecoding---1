@@ -31,7 +31,7 @@
 | Step 7 | 프론트(골격) | 완료 | 2026-05-21T02:50:00+09:00 | 2026-05-21T03:10:00+09:00 | 라우팅 골격(createBrowserRouter 6경로: /login·/register·/·/tasks/new·/profile·*) + AppShell + ProtectedRoute/PublicOnlyRoute + authStore(placeholder isAuthenticated:true) + httpClient(axios, withCredentials, Bearer 인터셉터, 401 refresh 구조 stub) + api/domain 타입 + 디자인 토큰(tailwind.config 선반영). typecheck/lint 0, vite build 106 modules OK, 백엔드 회귀 10파일 107건 통과. 경로 편차(/register·/tasks/new) 의도적. 2026-05-21 Playwright MCP로 6경로 렌더 검증 완료(전 경로 콘솔 에러 0). 프론트 단위테스트는 Step 8에서 RTL 도입 시 처리 |
 | Step 8 | 프론트(인증) | 완료 | 2026-05-21T03:55:00+09:00 | 2026-05-21T04:25:00+09:00 | 로그인/회원가입 화면 + 인증 API 연동 + authStore 실인증 전환 + httpClient 401 refresh-retry 완성 + 새로고침 세션복원 + 보호라우트 접근제어. typecheck/lint 0, backend 회귀 107건, vite build 188 modules. Playwright E2E 10흐름 PASS(회원가입→로그인→세션복원→로그아웃, 보호라우트 차단). 검증 중 차단버그 1건 수정(StrictMode 부트스트랩 정지) + 개선 2건. 프론트 테스트 러너 미설치로 RTL 파일만 작성(미실행) |
 | Step 9 | 프론트(메인) | 완료 | 2026-05-21T04:30:00+09:00 | 2026-05-21T04:55:00+09:00 | 메인 페이지(월간 캘린더+주간 일정 바+오늘 할 일+FAB+로딩/에러/빈 상태) + GET /plans 연동 + PATCH /complete 완료 토글(중복 클릭 방지). 캘린더=dueDate(완료 포함)·오늘=displayDate 미완료·주간=displayDate, KST 고정·D-Day 배지. typecheck/lint 0, backend 107건, vite build 209 modules. Playwright E2E(일정 5건 시드): 캘린더/주간/오늘/완료토글/새로고침 유지 PASS, 콘솔 에러 0. 상세/수정/삭제 UI는 범위 외(후속). 프론트 테스트 러너 미설치로 RTL 파일만 작성 |
-| Step 10 | 프론트(등록/수정) | 미시작 | - | - | - |
+| Step 10 | 프론트(등록/수정) | 완료 | 2026-05-21T05:00:00+09:00 | 2026-05-21T05:25:00+09:00 | /tasks/new 등록 페이지 + 재사용 PlanForm(create/edit) + POST/PATCH /plans + GET /categories 연동 + display_date 기본=due_date(FE-10) + display>due 교차검증 + 저장/취소 확인 모달(FE-06). typecheck/lint 0, backend 107건, vite build 219 modules. Playwright E2E: 등록 성공→메인 반영(오늘/캘린더/주간), 필수값·교차검증·취소모달 PASS, 콘솔 에러 0. 상세/삭제 UI는 범위 외(edit 모드 기능만 준비). 프론트 테스트 러너 미설치로 RTL 파일만 작성 |
 | Step 11 | 프론트(프로필) | 미시작 | - | - | - |
 | Step 12 | 프론트(검색/필터+E2E) | 미시작 | - | - | - |
 
@@ -1290,60 +1290,97 @@ cd frontend && node ../node_modules/vite/bin/vite.js build # PASS — 209 module
 
 ## Step 10. 할 일 등록/수정 페이지
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** wireframe-spec.md §4·§5, screen-flow.md §3·§5, design-review.md FE-06·FE-10, PRD §26
+- **상태:** 완료
+- **시작:** 2026-05-21T05:00:00+09:00
+- **완료:** 2026-05-21T05:25:00+09:00
+- **참조 문서:** wireframe-spec.md §4·§5, screen-flow.md §3·§5, api-spec.md §4-2·§4-4·§5-1, design-review.md FE-06·FE-10, PRD §26, design-reference.md
+
+### 범위 노트 (한 것 / 안 한 것)
+
+- **한 것:** PlanCreatePage(/tasks/new) 등록 흐름(POST /plans), 재사용 가능한 PlanForm(create/edit 모드), plan.schema(zod, display≤due 교차검증), createPlan/updatePlan API+hook, GET /categories 연동(칩), Textarea/ConfirmModal, 저장·취소 확인 모달, display_date 기본=due_date 자동 동기화(FE-10).
+- **안 한 것(사용자 명시 제외):** **일정 상세 보기·삭제 UI(PlanDetailModal, deletePlan)** — Step 11+. edit 모드는 **기능 구현·연동 준비 완료**이나 진입 UI(상세 모달 인라인 편집)는 미구현(향후 Step에서 모달이 PlanForm edit 모드를 연결). 검색/필터·카테고리 관리·프로필 UI 미구현.
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21 — executor(opus)로 Step 10 구현: PlanForm(create/edit) + PlanCreatePage + createPlan/updatePlan(+hooks) + getCategories(+useCategories) + plan.schema + Textarea/ConfirmModal.
+- 2026-05-21 — orchestrator 실측 검증: 백(4000)+프(5173) 기동 후 Playwright로 /tasks/new 등록 전 흐름 + 메인 반영 + 취소 확인 모달 검증. 차단 이슈 0건(executor 산출물 결함 없음).
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (frontend/src):**
+- `components/ui/Textarea.tsx`(라벨+inline error+helper+`{n}/500` 카운터) · `components/ui/ConfirmModal.tsx`(오버레이+Esc/외부클릭 취소+`isConfirming`)
+- `features/categories/api/getCategories.ts`(GET /categories, 읽기 전용) · `features/categories/hooks/useCategories.ts`(queryKey `['categories']`, 60s stale)
+- `features/plans/schemas/plan.schema.ts`(zod camelCase + `displayDate<=dueDate` refine, PRIORITY_VALUES, PlanFormValues)
+- `features/plans/api/createPlan.ts`(POST, snake_case 매핑) · `updatePlan.ts`(PATCH partial)
+- `features/plans/hooks/useCreatePlan.ts` · `useUpdatePlan.ts`(성공 시 `['plans']` 무효화)
+- `features/plans/components/PlanForm.tsx`(재사용 create/edit)
 
-- 예시: `frontend/src/pages/PlanCreatePage.tsx`
-- 예시: `frontend/src/features/plans/components/PlanForm.tsx`
-- 예시: `frontend/src/features/plans/api/createPlan.ts`
-- 예시: `frontend/src/features/plans/api/updatePlan.ts`
-- 예시: `frontend/src/features/plans/api/deletePlan.ts`
-- 예시: `frontend/src/features/plans/hooks/useCreatePlan.ts`
-- 예시: `frontend/src/features/plans/hooks/useUpdatePlan.ts`
-- 예시: `frontend/src/features/plans/hooks/useDeletePlan.ts`
-- 예시: `frontend/src/features/plans/schemas/plan.schema.ts`
-- 예시: `frontend/src/components/ui/ConfirmModal.tsx`
-- 예시: `frontend/src/components/ui/Textarea.tsx`
-- 예시: `frontend/tests/unit/PlanForm.test.tsx`
-- 예시: `frontend/e2e/plan-create.spec.ts`
+**생성 (frontend/tests):** `tests/unit/PlanForm.test.tsx`(RTL 4건 — 러너 미설치, 파일만)
+
+**수정:** `pages/PlanCreatePage.tsx` — 자리표시자 → 헤더(←+"할일 등록") + create 모드 PlanForm
+
+> `types/domain.ts` 무수정(기존 Plan/Category/Priority로 충분). 백엔드/Prisma 무수정. docs는 본 progress.md만. 새 npm 의존성 없음(`@hookform/resolvers/zod` 기설치).
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+npm run typecheck   # PASS — frontend + backend 0 에러
+npm run lint        # PASS — 0 에러·0 warning
+cd backend && node ../node_modules/vitest/vitest.mjs run   # PASS — 10파일 107건
+cd frontend && node ../node_modules/vite/bin/vite.js build # PASS — 219 modules
+# Playwright E2E: 백(4000)+프(5173) 기동 후 /tasks/new 흐름 검증
+```
 
-- 예시: `cd frontend && npm run test -- PlanForm`
-- 예시: `cd frontend && npx playwright test plan-create.spec.ts`
-- 예시: `cd frontend && npm run typecheck`
+### 구현된 PlanForm 구조
 
-### 검증 결과
+- **Props:** `mode: 'create'|'edit'`, `initialValues?: Plan`, `onSuccess(plan)`, `onCancel()`, `registerCancelRequest?(fn)`.
+- **필드:** 제목*(1~100) / 마감 기한*(`type=date`) / 마감 시간(`type=time`, "선택 사항") / 오늘의 할 일에 표시 날짜*(`type=date`) / 당일날 알려주기(checkbox, UI only) / 카테고리*(칩: 미분류+5색, 선택 시 색상 border+배경) / 중요도*(높음 #FEE2E2·보통 #FEF9C3·낮음 #DCFCE7) / 메모(Textarea rows4, 0~500, 카운터). 저장하기(Primary)+취소(Ghost).
+- **검증:** zodResolver(onBlur). 필수값 메시지(제목/마감기한/표시날짜/중요도), 교차검증 `displayDate<=dueDate` → 표시날짜 필드에 "표시 날짜는 마감 기한 이전이어야 합니다."
+- **display_date 자동 동기화(FE-10):** `displayDateTouchedRef`(create=false, edit=true). dueDate 변경 시 미터치면 displayDate 동기화, displayDate 수동 편집 시 영구 중단. 사용자 변경 가능.
+- **확인 모달:** 저장 시 "일정을 등록하시겠습니까?"(edit "…수정하시겠습니까?"), 취소/헤더← 시 "작성 중인 내용이 사라집니다. 취소하시겠습니까?". pristine 폼은 확인 없이 즉시 취소.
 
-- [ ] 등록 폼: title·due_date·due_time·display_date·category·priority·memo·is_remind 필드 존재 확인
-- [ ] 등록 시 display_date 초기값 = due_date 자동 설정 확인 (사용자 변경 가능)
-- [ ] display_date > due_date 입력 → 저장 불가 + 에러 메시지 표시
-- [ ] 카테고리 칩 색상 (컬러풀 5색) 표시 확인
-- [ ] 중요도 칩: 높음(빨강)/보통(노랑)/낮음(초록) 색상 표시 확인 (PRD §14-2)
-- [ ] 저장 클릭 → 저장 확인 모달 → 확인 → / 복귀
-- [ ] 취소 클릭 → 취소 확인 모달 (FE-06 결정)
-- [ ] 헤더 ← 클릭 → 취소 확인 모달 (FE-06 결정: 취소 버튼과 동일 동작)
-- [ ] 수정 모드: PlanDetailModal 내 인라인 편집 전환 (별도 페이지 이동 없음)
-- [ ] 삭제 후 목록에서 즉시 제거 확인 (soft delete)
-- [ ] RTL PlanForm 단위 테스트 통과
-- [ ] Playwright P-02 시나리오 통과
-- [ ] validation.md §8 기준 통과
+### 구현된 일정 등록/수정 범위
+
+- **등록(완전 연동):** /tasks/new → PlanForm create → POST /plans → `['plans']` 무효화 → 성공/취소 시 `/` 이동.
+- **수정(기능 준비, 진입 UI 미구현):** PlanForm `mode="edit"`+`initialValues` → useUpdatePlan PATCH, 기본값 채움, displayDateTouchedRef=true. 상세 모달 인라인 편집 진입은 Step 11+(사용자 제외). deletePlan/useDeletePlan 미생성(삭제 UI 범위 외).
+
+### API 연동 방식
+
+- POST `/plans`, PATCH `/plans/:id`, GET `/categories` — 모두 기존 `httpClient`(Bearer+401 refresh-retry) 재사용.
+- camelCase→snake_case: `toCreateRequest`/`toUpdateBody`로 매핑(빈 dueTime/memo→null, categoryId null=미분류).
+- 쿼리 무효화: 두 mutation 모두 `['plans']` 무효화 → 캘린더/오늘/주간 갱신. 카테고리는 `['categories']`.
+- 서버 에러(방어): 422 details→필드 매핑(displayDate/dueDate/title/memo), 404 CATEGORY_NOT_FOUND→categoryId 필드, 그 외 토스트. 401은 httpClient.
+
+### 날짜 라벨 (혼동 방지)
+
+- **마감 기한(due_date):** helper "캘린더에 표시되는 마감일입니다."
+- **오늘의 할 일에 표시 날짜(display_date):** helper "기본값은 마감 기한과 동일합니다. (오늘 할 일·주간 바 표시 기준)"
+
+### Playwright 검증 결과 (2026-05-21, 백+프 기동, 실측 E2E)
+
+| 흐름 | 결과 | 근거 |
+|---|---|---|
+| 로그인 후 /tasks/new 접근 | PASS | FAB "일정 추가" → /tasks/new, 폼 렌더(전 필드+라벨+기본 날짜 today KST) |
+| 필수값 누락 검증 | PASS | 빈 제목 저장 → "제목을 입력해주세요.", 제출 차단 |
+| 교차검증(display>due) | PASS | displayDate 2026-05-25 > dueDate 2026-05-21 → "표시 날짜는 마감 기한 이전이어야 합니다.", 제출 차단 |
+| 카테고리 선택 | PASS | 과제 칩 선택 동작 |
+| 정상 등록 성공 | PASS | 저장→"일정을 등록하시겠습니까?" 확인→POST→/ 이동 |
+| 메인 반영 | PASS | "회귀 리포트 작성" 오늘 할 일 추가([과제] 보통 D-Day), 캘린더 21일 1→2건, 주간 목 3→4건 |
+| 취소 확인 모달(FE-06) | PASS | 작성 중 취소→"작성 중인 내용이 사라집니다…" 확인→/ 이동 |
+| 콘솔 에러 | PASS | 전 흐름 0건(React Router v7 경고 1건 정보성) |
+| Step 8 회귀 | PASS | 로그인/세션 복원 정상 |
+| Step 9 회귀 | PASS | 메인 캘린더/오늘/주간/완료토글 정상 |
 
 ### 남은 문제
 
-- 없음
+- **프론트 단위 테스트 러너 미설치(비차단, Step 8·9와 동일).** PlanForm RTL 테스트 파일 작성 완료, 러너(vitest+jsdom+RTL) 설정 후 실행 가능. `tsconfig include`가 `["src"]`라 typecheck/build 무영향. 가짜 통과 처리 없음.
+- 검증용으로 dev DB(gitignore)에 일정 1건("회귀 리포트 작성") 추가 생성 — 개발 DB 산출물(무해).
+
+### 다음 Step에서 해야 할 일 (Step 11 — 프로필 페이지 + 카테고리 관리)
+
+- ProfilePage + ProfileForm(닉네임 PATCH) + PasswordForm(비번 변경) + AvatarUpload(POST avatar) + CategoryList/CategoryFormModal(카테고리 CRUD) + 카테고리 삭제 시 연결 일정 "미분류" 표시.
+- 일정 상세 모달(PlanDetailModal, ?planId) + 인라인 수정(PlanForm edit 모드 연결) + 삭제(deletePlan) 도입 검토 — Step 10에서 준비된 edit 모드/updatePlan 활용.
+- Playwright P-06 통과.
 
 ---
 

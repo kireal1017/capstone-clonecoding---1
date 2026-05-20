@@ -1,0 +1,172 @@
+- generic [ref=e5]:
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "PlanMate" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e9]:
+        - link "오늘의 일정" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - link "프로필" [ref=e11] [cursor=pointer]:
+          - /url: /profile
+        - button "로그아웃" [ref=e12] [cursor=pointer]
+  - main [ref=e13]:
+    - generic [ref=e76]:
+      - region "월간 캘린더" [ref=e77]:
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - button "이전 달" [ref=e80] [cursor=pointer]: <
+            - heading "2026년 5월" [level=2] [ref=e81]
+            - button "다음 달" [ref=e82] [cursor=pointer]: ">"
+          - generic [ref=e83]:
+            - generic [ref=e84]: 일
+            - generic [ref=e85]: 월
+            - generic [ref=e86]: 화
+            - generic [ref=e87]: 수
+            - generic [ref=e88]: 목
+            - generic [ref=e89]: 금
+            - generic [ref=e90]: 토
+          - generic [ref=e91]:
+            - button "26일 일정 0건" [ref=e93] [cursor=pointer]:
+              - generic [ref=e94]: "26"
+            - button "27일 일정 0건" [ref=e96] [cursor=pointer]:
+              - generic [ref=e97]: "27"
+            - button "28일 일정 0건" [ref=e99] [cursor=pointer]:
+              - generic [ref=e100]: "28"
+            - button "29일 일정 0건" [ref=e102] [cursor=pointer]:
+              - generic [ref=e103]: "29"
+            - button "30일 일정 0건" [ref=e105] [cursor=pointer]:
+              - generic [ref=e106]: "30"
+            - button "1일 일정 0건" [ref=e108] [cursor=pointer]:
+              - generic [ref=e109]: "1"
+            - button "2일 일정 0건" [ref=e111] [cursor=pointer]:
+              - generic [ref=e112]: "2"
+            - button "3일 일정 0건" [ref=e114] [cursor=pointer]:
+              - generic [ref=e115]: "3"
+            - button "4일 일정 0건" [ref=e117] [cursor=pointer]:
+              - generic [ref=e118]: "4"
+            - button "5일 일정 0건" [ref=e120] [cursor=pointer]:
+              - generic [ref=e121]: "5"
+            - button "6일 일정 0건" [ref=e123] [cursor=pointer]:
+              - generic [ref=e124]: "6"
+            - button "7일 일정 0건" [ref=e126] [cursor=pointer]:
+              - generic [ref=e127]: "7"
+            - button "8일 일정 0건" [ref=e129] [cursor=pointer]:
+              - generic [ref=e130]: "8"
+            - button "9일 일정 0건" [ref=e132] [cursor=pointer]:
+              - generic [ref=e133]: "9"
+            - button "10일 일정 0건" [ref=e135] [cursor=pointer]:
+              - generic [ref=e136]: "10"
+            - button "11일 일정 0건" [ref=e138] [cursor=pointer]:
+              - generic [ref=e139]: "11"
+            - button "12일 일정 0건" [ref=e141] [cursor=pointer]:
+              - generic [ref=e142]: "12"
+            - button "13일 일정 0건" [ref=e144] [cursor=pointer]:
+              - generic [ref=e145]: "13"
+            - button "14일 일정 0건" [ref=e147] [cursor=pointer]:
+              - generic [ref=e148]: "14"
+            - button "15일 일정 0건" [ref=e150] [cursor=pointer]:
+              - generic [ref=e151]: "15"
+            - button "16일 일정 0건" [ref=e153] [cursor=pointer]:
+              - generic [ref=e154]: "16"
+            - button "17일 일정 0건" [ref=e156] [cursor=pointer]:
+              - generic [ref=e157]: "17"
+            - button "18일 일정 1건" [ref=e159] [cursor=pointer]:
+              - generic [ref=e160]: "18"
+            - button "19일 일정 0건" [ref=e164] [cursor=pointer]:
+              - generic [ref=e165]: "19"
+            - button "20일 일정 0건" [ref=e167] [cursor=pointer]:
+              - generic [ref=e168]: "20"
+            - button "21일 일정 2건" [ref=e170] [cursor=pointer]:
+              - generic [ref=e171]: "21"
+            - button "22일 일정 1건" [ref=e175] [cursor=pointer]:
+              - generic [ref=e176]: "22"
+            - button "23일 일정 0건" [ref=e180] [cursor=pointer]:
+              - generic [ref=e181]: "23"
+            - button "24일 일정 1건" [ref=e183] [cursor=pointer]:
+              - generic [ref=e184]: "24"
+            - button "25일 일정 0건" [ref=e188] [cursor=pointer]:
+              - generic [ref=e189]: "25"
+            - button "26일 일정 0건" [ref=e191] [cursor=pointer]:
+              - generic [ref=e192]: "26"
+            - button "27일 일정 0건" [ref=e194] [cursor=pointer]:
+              - generic [ref=e195]: "27"
+            - button "28일 일정 1건" [ref=e197] [cursor=pointer]:
+              - generic [ref=e198]: "28"
+            - button "29일 일정 0건" [ref=e202] [cursor=pointer]:
+              - generic [ref=e203]: "29"
+            - button "30일 일정 0건" [ref=e205] [cursor=pointer]:
+              - generic [ref=e206]: "30"
+            - button "31일 일정 0건" [ref=e208] [cursor=pointer]:
+              - generic [ref=e209]: "31"
+            - button "1일 일정 0건" [ref=e211] [cursor=pointer]:
+              - generic [ref=e212]: "1"
+            - button "2일 일정 0건" [ref=e214] [cursor=pointer]:
+              - generic [ref=e215]: "2"
+            - button "3일 일정 0건" [ref=e217] [cursor=pointer]:
+              - generic [ref=e218]: "3"
+            - button "4일 일정 0건" [ref=e220] [cursor=pointer]:
+              - generic [ref=e221]: "4"
+            - button "5일 일정 0건" [ref=e223] [cursor=pointer]:
+              - generic [ref=e224]: "5"
+            - button "6일 일정 0건" [ref=e226] [cursor=pointer]:
+              - generic [ref=e227]: "6"
+      - region "주간 일정 바" [ref=e228]:
+        - heading "주간 할 일" [level=2] [ref=e229]
+        - generic [ref=e231]:
+          - button "월요일 일정 1건" [ref=e232] [cursor=pointer]:
+            - generic [ref=e235]: 월
+            - generic [ref=e236]: "1"
+          - button "화요일 일정 0건" [ref=e237] [cursor=pointer]:
+            - generic [ref=e240]: 화
+            - generic [ref=e241]: "0"
+          - button "수요일 일정 1건" [ref=e242] [cursor=pointer]:
+            - generic [ref=e245]: 수
+            - generic [ref=e246]: "1"
+          - button "목요일 일정 4건" [ref=e247] [cursor=pointer]:
+            - generic [ref=e250]: 목
+            - generic [ref=e251]: "4"
+          - button "금요일 일정 0건" [ref=e252] [cursor=pointer]:
+            - generic [ref=e255]: 금
+            - generic [ref=e256]: "0"
+          - button "토요일 일정 0건" [ref=e257] [cursor=pointer]:
+            - generic [ref=e260]: 토
+            - generic [ref=e261]: "0"
+          - button "일요일 일정 0건" [ref=e262] [cursor=pointer]:
+            - generic [ref=e265]: 일
+            - generic [ref=e266]: "0"
+      - region "오늘 할 일 목록" [ref=e267]:
+        - generic [ref=e268]:
+          - heading "오늘 할 일" [level=2] [ref=e269]
+          - generic [ref=e270]: 2026.05.21
+        - list [ref=e271]:
+          - listitem [ref=e272]:
+            - generic [ref=e273]:
+              - checkbox "데이터베이스 복습 완료 토글" [ref=e274] [cursor=pointer]
+              - generic [ref=e275]:
+                - paragraph [ref=e276]: 데이터베이스 복습
+                - generic [ref=e277]:
+                  - generic [ref=e278]: 시험
+                  - generic [ref=e280]: 보통
+                  - generic [ref=e281]: D-3
+          - listitem [ref=e282]:
+            - generic [ref=e283]:
+              - checkbox "회귀 리포트 작성 완료 토글" [ref=e284] [cursor=pointer]
+              - generic [ref=e285]:
+                - paragraph [ref=e286]: 회귀 리포트 작성
+                - generic [ref=e287]:
+                  - generic [ref=e288]: 과제
+                  - generic [ref=e290]: 보통
+                  - generic [ref=e291]: D-Day
+          - listitem [ref=e292]:
+            - generic [ref=e293]:
+              - checkbox "팀 미팅 준비 완료 토글" [ref=e294] [cursor=pointer]
+              - generic [ref=e295]:
+                - paragraph [ref=e296]: 팀 미팅 준비
+                - generic [ref=e297]:
+                  - generic [ref=e298]: 미팅
+                  - generic [ref=e300]: 🕐 14:00
+                  - generic [ref=e301]: 낮음
+                  - generic [ref=e302]: 2026.05.28
+      - link "일정 추가" [ref=e303] [cursor=pointer]:
+        - /url: /tasks/new
+        - generic [ref=e304]: +

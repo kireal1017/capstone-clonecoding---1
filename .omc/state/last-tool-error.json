@@ -1,7 +1,7 @@
 {
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"C:\\\\Users\\\\j9077\\\\OneDrive\\\\바탕 화면\\\\26-1 캡디\\\\week12 - planmate-omctest\\\\frontend\\\\src\\\\components\\\\ui\\\\Spinner.tsx\"}",
-  "error": "File does not exist. Note: your current working directory is C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest.",
-  "timestamp": "2026-05-20T18:48:28.412Z",
-  "retry_count": 1
+  "tool_name": "mcp__playwright__browser_snapshot",
+  "tool_input_preview": "{\"target\":\"e237\"}",
+  "error": "### Error\nError: Ref e237 not found in the current page snapshot. Try capturing new snapshot.",
+  "timestamp": "2026-05-20T20:09:21.113Z",
+  "retry_count": 2
 }

@@ -1,0 +1,71 @@
+- generic [ref=e5]:
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - link "PlanMate" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e9]:
+        - link "오늘의 일정" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - link "프로필" [ref=e11] [cursor=pointer]:
+          - /url: /profile
+        - button "로그아웃" [ref=e12] [cursor=pointer]
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - button "뒤로 가기" [ref=e16] [cursor=pointer]: ←
+        - heading "할일 등록" [level=1] [ref=e17]
+      - region "일정 등록 폼" [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - generic [ref=e21]: 할 일 제목 *
+            - textbox "할 일 제목 *" [ref=e22]:
+              - /placeholder: "예: 영상처리 과제 제출"
+              - text: 취소 테스트
+          - generic [ref=e23]:
+            - generic [ref=e24]: 마감 기한 *
+            - textbox "마감 기한 *" [ref=e25]: 2026-05-21
+            - paragraph [ref=e26]: 캘린더에 표시되는 마감일입니다.
+          - generic [ref=e27]:
+            - generic [ref=e28]: 마감 시간
+            - textbox "마감 시간" [ref=e29]
+            - paragraph [ref=e30]: 선택 사항
+          - generic [ref=e31]:
+            - generic [ref=e32]: 오늘의 할 일에 표시 날짜 *
+            - textbox "오늘의 할 일에 표시 날짜 *" [ref=e33]: 2026-05-21
+            - paragraph [ref=e34]: 기본값은 마감 기한과 동일합니다. (오늘 할 일·주간 바 표시 기준)
+          - generic [ref=e35]:
+            - checkbox "당일날 알려주기" [ref=e36] [cursor=pointer]
+            - text: 당일날 알려주기
+          - separator [ref=e37]
+          - group "카테고리 *" [ref=e38]:
+            - generic [ref=e39]: 카테고리 *
+            - generic [ref=e40]:
+              - button "미분류" [pressed] [ref=e41] [cursor=pointer]: 미분류
+              - button "미팅" [ref=e43] [cursor=pointer]: 미팅
+              - button "과제" [ref=e45] [cursor=pointer]: 과제
+              - button "시험" [ref=e47] [cursor=pointer]: 시험
+              - button "개인 일정" [ref=e49] [cursor=pointer]: 개인 일정
+              - button "약속" [ref=e51] [cursor=pointer]: 약속
+          - separator [ref=e53]
+          - group "중요도 *" [ref=e54]:
+            - generic [ref=e55]: 중요도 *
+            - generic [ref=e56]:
+              - button "높음" [ref=e57] [cursor=pointer]
+              - button "보통" [pressed] [ref=e58] [cursor=pointer]
+              - button "낮음" [ref=e59] [cursor=pointer]
+          - separator [ref=e60]
+          - generic [ref=e61]:
+            - generic [ref=e62]: 메모
+            - textbox "메모" [ref=e63]:
+              - /placeholder: 메모를 입력하세요. (선택 사항)
+            - generic [ref=e65]: 0/500
+          - generic [ref=e66]:
+            - button "저장하기" [ref=e67] [cursor=pointer]
+            - button "취소" [ref=e68] [cursor=pointer]
+        - dialog [ref=e70]:
+          - generic [ref=e72]:
+            - text: 작성 중인 내용이 사라집니다.
+            - text: 취소하시겠습니까?
+          - generic [ref=e73]:
+            - button "취소" [ref=e74] [cursor=pointer]
+            - button "확인" [active] [ref=e75] [cursor=pointer]
