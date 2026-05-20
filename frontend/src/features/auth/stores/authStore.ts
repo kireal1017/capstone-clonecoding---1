@@ -1,29 +1,45 @@
 import { create } from 'zustand';
-import type { User } from '@/types/domain';
 
 /**
- * 인증 상태 스토어 (Zustand) — Step 7 골격 단계.
+ * 인증 상태 스토어 (Zustand) — Step 8 실제 토큰 기반 인증.
  *
- * Step 8: replace with real token-based auth; default will become false
- *
- * 현재 `isAuthenticated`의 기본값을 true로 두어 보호 라우트(AppShell 하위)가
- * 골격 검증 단계에서 탐색 가능하도록 한다. 가드 로직 자체는 정상 구현되어
- * 있으므로, Step 8에서 기본값을 false로 바꾸고 실제 로그인 상태를 주입하면
- * 그대로 동작한다.
+ * - accessToken 은 메모리에만 보관(refresh 토큰은 httpOnly 쿠키, JS 접근 불가).
+ * - 새로고침 복원(부트스트랩)은 useAuthBootstrap 훅이 수행: refresh → me 순서로
+ *   성공 시 setAuth, 실패 시 clearAuth. 그 진행 상태를 `status` 로 노출한다.
+ * - ProtectedRoute / PublicOnlyRoute 는 부트스트랩 완료(status !== 'idle' && !== 'loading')
+ *   전까지 리다이렉트 판단을 보류해 깜빡임(redirect flash)을 방지한다.
  */
+
+/** authStore 가 보관하는 사용자 표현 (login/me 응답 공통 부분집합). */
+export interface AuthUser {
+  id: number;
+  email: string;
+  nickname: string;
+  avatarUrl: string | null;
+  createdAt?: string;
+}
+
+/** 부트스트랩(세션 복원) 진행 상태. */
+export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
+
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: User, accessToken: string) => void;
+  status: AuthStatus;
+  setAuth: (user: AuthUser, accessToken: string) => void;
   clearAuth: () => void;
+  setStatus: (status: AuthStatus) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
-  // Step 8: replace with real token-based auth; default will become false
-  isAuthenticated: true,
-  setAuth: (user, accessToken) => set({ user, accessToken, isAuthenticated: true }),
-  clearAuth: () => set({ user: null, accessToken: null, isAuthenticated: false }),
+  isAuthenticated: false,
+  status: 'idle',
+  setAuth: (user, accessToken) =>
+    set({ user, accessToken, isAuthenticated: true, status: 'authenticated' }),
+  clearAuth: () =>
+    set({ user: null, accessToken: null, isAuthenticated: false, status: 'unauthenticated' }),
+  setStatus: (status) => set({ status }),
 }));

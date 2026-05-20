@@ -29,7 +29,7 @@
 | Step 5 | 백엔드(카테고리) | 완료 | 2026-05-21 | 2026-05-21T01:30:00+09:00 | 카테고리 API 4개 + 통합 25건 통과(전체 9파일 88건, 회귀 무). 수정=PUT 전체교체 확정, 사용자별 격리·타인 404 CATEGORY_NOT_FOUND, 중복명 409, 삭제 시 Plan.categoryId SetNull(affectedPlans 반환). DELETE 응답 200+{message,affectedPlans}(api-spec §5-4 채택). verifier-1 검증: 19/19 PASS (2026-05-21T01:40:00+09:00). 문서 편차 2건 → doc-fixer-1이 2026-05-21 정정 완료(validation §3-3 204→200, PUT/DELETE 에러표 AUTH_FORBIDDEN→CATEGORY_NOT_FOUND) |
 | Step 6 | 백엔드(프로필) | 완료 | 2026-05-21 | 2026-05-21T02:15:00+09:00 | 프로필 API 4개(GET/PATCH/PATCH password/POST avatar) + 통합 19건 통과(전체 10파일 107건, 회귀 무). 본인(req.user.userId)만 접근, 닉네임=PATCH(email 불변), 비번변경=verifyPassword→hashPassword(현재 불일치 401 AUTH_INVALID_CREDENTIALS, refreshTokenHash 미변경=§6-3 정책), 아바타=multer(jpg/png/webp·5MB, 초과 400 FILE_TOO_LARGE·형식 400 INVALID_FILE_TYPE·누락 422), /uploads 정적서빙. typecheck/lint 0. verifier-1 검증: 21/21 PASS (2026-05-21T02:40:00+09:00). 추가점검: bcrypt 20초 타임아웃=환경 보정(단언 손실 없음) PASS. updatedAt 포함=validation §3-4 정합 PASS. |
 | Step 7 | 프론트(골격) | 완료 | 2026-05-21T02:50:00+09:00 | 2026-05-21T03:10:00+09:00 | 라우팅 골격(createBrowserRouter 6경로: /login·/register·/·/tasks/new·/profile·*) + AppShell + ProtectedRoute/PublicOnlyRoute + authStore(placeholder isAuthenticated:true) + httpClient(axios, withCredentials, Bearer 인터셉터, 401 refresh 구조 stub) + api/domain 타입 + 디자인 토큰(tailwind.config 선반영). typecheck/lint 0, vite build 106 modules OK, 백엔드 회귀 10파일 107건 통과. 경로 편차(/register·/tasks/new) 의도적. 2026-05-21 Playwright MCP로 6경로 렌더 검증 완료(전 경로 콘솔 에러 0). 프론트 단위테스트는 Step 8에서 RTL 도입 시 처리 |
-| Step 8 | 프론트(인증) | 미시작 | - | - | - |
+| Step 8 | 프론트(인증) | 완료 | 2026-05-21T03:55:00+09:00 | 2026-05-21T04:25:00+09:00 | 로그인/회원가입 화면 + 인증 API 연동 + authStore 실인증 전환 + httpClient 401 refresh-retry 완성 + 새로고침 세션복원 + 보호라우트 접근제어. typecheck/lint 0, backend 회귀 107건, vite build 188 modules. Playwright E2E 10흐름 PASS(회원가입→로그인→세션복원→로그아웃, 보호라우트 차단). 검증 중 차단버그 1건 수정(StrictMode 부트스트랩 정지) + 개선 2건. 프론트 테스트 러너 미설치로 RTL 파일만 작성(미실행) |
 | Step 9 | 프론트(메인) | 미시작 | - | - | - |
 | Step 10 | 프론트(등록/수정) | 미시작 | - | - | - |
 | Step 11 | 프론트(프로필) | 미시작 | - | - | - |
@@ -1067,62 +1067,131 @@ cd backend && npm run test  # PASS — 10파일 107건 (회귀 무)
 
 ## Step 8. 로그인/회원가입 페이지
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** wireframe-spec.md §1·§2, screen-flow.md §1, api-spec.md §3, design-review.md FE-09
+- **상태:** 완료
+- **시작:** 2026-05-21T03:55:00+09:00
+- **완료:** 2026-05-21T04:25:00+09:00
+- **참조 문서:** wireframe-spec.md §1·§2, screen-flow.md §1, api-spec.md §3, design-reference.md(Serene Productivity), design-review.md FE-09, harness.md §Step 8(허용 파일 화이트리스트)
+
+### 범위 노트 (한 것 / 안 한 것)
+
+- **한 것:** /login·/register 화면, 인증 API 연동(login/register/me/logout/refresh), authStore 실제 토큰 인증 전환, httpClient 401 refresh-and-retry 완성, 새로고침 세션 복원(부트스트랩), 보호 라우트 접근 제어, 공통 UI(Button/Input/Toast/Spinner), Zod 검증, RTL 테스트 파일 작성.
+- **안 한 것(범위 외):** 일정/캘린더/등록 UI(Step 9·10), 카테고리 관리 UI(Step 11), 프로필 수정 UI(Step 11), 비밀번호 찾기(FE-09 미표시). 프론트 테스트 러너 미설치 → RTL 테스트 파일은 작성했으나 실행 미구성(아래 "남은 문제" 참조).
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21 — executor(opus)로 Step 8 구현: 공통 UI 4종 + auth schemas/api/hooks/components + LoginPage/RegisterPage 본 구현 + Step 7 스텁(authStore/httpClient/가드/App/AppShell) 완성.
+- 2026-05-21 — **검증 중 차단 버그 발견·수정 (orchestrator):** `useAuthBootstrap`이 React StrictMode 더블 인보크에서 cleanup의 `cancelled=true` + `startedRef` 가드 조합으로 부트스트랩 결과 반영(setAuth/clearAuth)이 건너뛰어져 `status='loading'`에 영구 정지("세션 확인 중" 무한). → cleanup/cancelled 제거(전역 스토어 갱신은 언마운트와 무관하게 항상 종료)로 수정.
+- 2026-05-21 — **검증 중 개선 2건 (orchestrator):** ① httpClient의 refresh in-flight 정리 체인이 unhandled rejection을 발생 → `.catch(()=>undefined)` 삽입으로 제거. ② 로그인/회원가입 401(자격증명 실패)이 토큰 refresh 재시도를 유발 → `/auth/login`·`/auth/register`·`/auth/refresh`를 refresh-retry 제외 대상으로 확장(불필요한 호출·잘못된 의미 제거).
+- 2026-05-21 — Playwright MCP로 전 인증 흐름 실측 검증 통과(아래 표). 백엔드 dev 서버(4000)+프론트(5173) 동시 기동, 실제 회원가입→로그인→세션복원→로그아웃 E2E.
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (frontend/src):**
+- `components/ui/Spinner.tsx` — 로딩 스피너(버튼/부트스트랩 폴백)
+- `components/ui/Button.tsx` — primary/ghost variant, `isLoading` 자동 disable+스피너
+- `components/ui/Input.tsx` — `forwardRef` 입력(label/helper/inline-error, RHF 호환)
+- `components/ui/Toast.tsx` — Context 기반 토스트 provider(3s 자동 해제)
+- `features/auth/schemas/login.schema.ts` · `register.schema.ts` — Zod(email RFC5322≤254, password 영문+숫자 8~72, nickname 2~20 공백불가, confirmPassword 일치)
+- `features/auth/api/login.ts` · `register.ts` · `logout.ts` · `me.ts` · `refresh.ts`
+- `features/auth/hooks/useLogin.ts` · `useRegister.ts` · `useLogout.ts` · `useAuthBootstrap.ts`
+- `features/auth/components/LoginForm.tsx` · `RegisterForm.tsx`
 
-- 예시: `frontend/src/pages/LoginPage.tsx`
-- 예시: `frontend/src/pages/AuthPage.tsx`
-- 예시: `frontend/src/features/auth/components/LoginForm.tsx`
-- 예시: `frontend/src/features/auth/components/RegisterForm.tsx`
-- 예시: `frontend/src/features/auth/schemas/login.schema.ts`
-- 예시: `frontend/src/features/auth/schemas/register.schema.ts`
-- 예시: `frontend/src/features/auth/api/login.ts`
-- 예시: `frontend/src/features/auth/api/register.ts`
-- 예시: `frontend/src/features/auth/api/logout.ts`
-- 예시: `frontend/src/features/auth/api/refresh.ts`
-- 예시: `frontend/src/features/auth/hooks/useLogin.ts`
-- 예시: `frontend/src/features/auth/hooks/useRegister.ts`
-- 예시: `frontend/src/features/auth/hooks/useLogout.ts`
-- 예시: `frontend/src/components/ui/Button.tsx`
-- 예시: `frontend/src/components/ui/Input.tsx`
-- 예시: `frontend/src/components/ui/Toast.tsx`
-- 예시: `frontend/tests/unit/auth/LoginForm.test.tsx`
-- 예시: `frontend/tests/unit/auth/RegisterForm.test.tsx`
+**생성 (frontend/tests):**
+- `tests/unit/auth/LoginForm.test.tsx` · `RegisterForm.test.tsx` (RTL — 러너 미설치 상태, 파일만 작성)
+
+**수정 (Step 7 스텁 완성):**
+- `features/auth/stores/authStore.ts` — 기본 `isAuthenticated:false`, `status`(idle/loading/authenticated/unauthenticated)+`setStatus`, `AuthUser` 타입
+- `lib/api/httpClient.ts` — 401 refresh-and-retry 완성(단일 in-flight refresh 디듀프·재시도 1회·auth 진입 엔드포인트 제외·실패 시 clearAuth) + unhandled rejection 제거
+- `routes/ProtectedRoute.tsx` · `PublicOnlyRoute.tsx` — 부트스트랩 완료(`status`)까지 가드 판단 보류(스피너), 리다이렉트 깜빡임 방지
+- `App.tsx` — `ToastProvider` + `AuthBootstrapGate`(부트스트랩 1회 실행→짧은 스피너→RouterProvider)
+- `components/layout/AppShell.tsx` — 로그아웃 버튼을 `useLogout`+`/login` 이동에 연결
+- `pages/LoginPage.tsx` · `RegisterPage.tsx` — 자리표시자 → 본 화면
+
+> 백엔드/Prisma/마이그레이션 무수정. docs는 본 progress.md만 수정. 새 npm 의존성 추가 없음(`@hookform/resolvers/zod` 기설치 확인).
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+# 루트: 통합 검증
+npm run typecheck   # PASS — frontend + backend 0 에러
+npm run lint        # PASS — frontend + backend 0 에러·0 warning (--max-warnings=0)
 
-- 예시: `cd frontend && npm run test -- auth`
-- 예시: `cd frontend && npm run typecheck`
+# backend: 회귀
+cd backend && node ../node_modules/vitest/vitest.mjs run   # PASS — 10파일 107건
+
+# frontend: 빌드 스모크
+cd frontend && node ../node_modules/vite/bin/vite.js build  # PASS — 188 modules
+
+# Playwright E2E: 백엔드(4000)+프론트(5173) 동시 기동 후 6흐름 검증
+cd backend  && node ../node_modules/tsx/dist/cli.mjs src/server.ts   # :4000
+cd frontend && node ../node_modules/vite/bin/vite.js --port 5173 --strictPort
+```
 
 ### 검증 결과
 
-- [ ] 회원가입 폼: 닉네임·이메일·비밀번호·비밀번호 확인 필드 존재 확인
-- [ ] 회원가입 Zod 검증: 이메일 형식 오류, 비밀번호 8자 미만, 비밀번호 불일치 에러 메시지 표시
-- [ ] 회원가입 성공 → /login 이동 확인
-- [ ] 로그인 폼: 이메일·비밀번호 필드 존재 확인
-- [ ] 로그인 성공 → / 메인 이동 확인
-- [ ] 로그인 실패 → 에러 토스트 표시 확인
-- [ ] 비밀번호 찾기 링크 미표시 확인 (FE-09 결정: 초기 버전 hidden)
-- [ ] RTL LoginForm 단위 테스트 통과
-- [ ] RTL RegisterForm 단위 테스트 통과
-- [ ] 브라우저 수동 확인: 회원가입→로그인→메인 전체 흐름
-- [ ] validation.md §7 기준 통과 (Playwright P-01 일부)
+- [x] 회원가입 폼: 닉네임·이메일·비밀번호·비밀번호 확인 필드 + helper 텍스트 존재
+- [x] 회원가입 Zod 검증: 이메일 형식 오류·닉네임 2자 미만·비밀번호 불일치 에러 메시지 표시(클라이언트, 제출 차단)
+- [x] 회원가입 성공 → /login 이동 + "회원가입이 완료되었습니다. 로그인해주세요." 안내(BE-06: 토큰 미발급)
+- [x] 회원가입 실패(중복 이메일 409) → 이메일 필드 "이미 사용 중인 이메일입니다."
+- [x] 로그인 폼: 이메일·비밀번호 필드 존재, 비밀번호 찾기 링크 미표시(FE-09)
+- [x] 로그인 성공 → / 메인 이동 + AppShell(인증) 렌더
+- [x] 로그인 실패(401) → "이메일 또는 비밀번호가 올바르지 않습니다." alert
+- [x] 새로고침 세션 복원: 로그인 후 / 새로고침 시 인증 유지(refresh→me, 콘솔 에러 0)
+- [x] 로그아웃 → /login 이동 + 인증 해제
+- [x] 보호 라우트 접근 제어: 비로그인 시 `/`·`/profile` 접근 → /login 리다이렉트
+- [x] `npm run typecheck` PASS / `npm run lint` PASS(0 warning)
+- [x] backend `npm run test` 10파일 107건(회귀 무) / frontend `vite build` 188 modules
+- [x] `any`/`@ts-ignore`/console/debugger 0건
+- [~] RTL LoginForm/RegisterForm 단위 테스트: **파일 작성 완료, 러너 미설치로 실행 미수행**(아래 남은 문제)
+
+### 구현된 인증 화면
+
+| 라우트 | 화면 | 구성 |
+|---|---|---|
+| `/login` | 로그인 | PlanMate 로고 + "차분한 생산성의 시작", 이메일/비밀번호, 로그인 버튼(로딩 시 disable+"로그인 중..."), 회원가입 링크, © 2026 PlanMate. 401 inline alert. register 경유 시 성공 안내. 비밀번호 찾기 미표시(FE-09) |
+| `/register` | 회원가입 | 닉네임(helper "2~20자, 공백 불가") + 이메일 + 비밀번호(helper "영문+숫자 포함 8자 이상") + 비밀번호 확인 + 가입하기 버튼 + 로그인 링크 |
+
+### 인증 상태 관리 방식
+
+- **저장:** authStore(Zustand) — `user`/`accessToken`(메모리)/`isAuthenticated`/`status`. accessToken은 메모리 전용, refresh 토큰은 httpOnly 쿠키(JS 미접근).
+- **세션 복원(부트스트랩):** `useAuthBootstrap`+`AuthBootstrapGate`가 앱 로드 시 1회 — `status='loading'` → `POST /auth/refresh`(쿠키 자동 전송) → `GET /auth/me` → `setAuth`. 실패 시 `clearAuth`. 항상 종료(무한 대기 없음), 완료 전 짧은 스피너. 가드는 `status`로 게이팅해 리다이렉트 깜빡임 방지.
+- **접근 제어:** ProtectedRoute = 부트스트랩 완료 후 `isAuthenticated` 기준, 미인증→/login(`state.from` 보존). PublicOnlyRoute = 인증 시 →/.
+- **로그아웃:** `useLogout` → `POST /auth/logout` → `onSettled`에서 clearAuth+쿼리캐시 정리(서버 실패해도 클라이언트 해제) → /login.
+
+### API 연동 방식
+
+- 레이어링: 컴포넌트 → 훅(`useMutation`) → api 함수 → `httpClient`(Step 7 axios 인스턴스).
+- 매핑(api-spec §3): login `{accessToken,user}`→setAuth / register `{user}`→토큰 미발급(BE-06)→/login / me `{user}` Bearer / logout Bearer.
+- **httpClient 401 refresh-and-retry:** 401 감지 시 단일 in-flight refresh 공유(동시 401 디듀프)→원 요청 1회 재시도, refresh 실패 시 clearAuth. 무한 루프/오의미 방지를 위해 `/auth/login`·`/auth/register`·`/auth/refresh`는 재시도 제외.
+- 에러 매핑: 로그인 401→공통 alert / 회원가입 409→이메일 필드 / 422→`error.details[]`를 필드별 매핑 / 429→폼 메시지.
+
+### Playwright 검증 결과 (2026-05-21, 백엔드+프론트 동시 기동, 실측 E2E)
+
+| 흐름 | 결과 | 비고 |
+|---|---|---|
+| /login 렌더 | PASS | 폼·로고·링크 정상, 비번찾기 미표시 |
+| /register 렌더 | PASS | 4필드 + helper 정상 |
+| 클라이언트 검증 | PASS | 닉네임2자/이메일형식/비번불일치 메시지, 제출 차단 |
+| 회원가입 성공 | PASS | →/login + 성공 안내(신규 사용자 DB 생성) |
+| 회원가입 실패(중복) | PASS | 409 → 이메일 필드 에러 |
+| 로그인 실패(오류 비번) | PASS | 401 → alert, refresh 재시도 미발생(수정 후) |
+| 로그인 성공 | PASS | →/ 메인 인증 렌더 |
+| 세션 복원(새로고침) | PASS | 인증 유지, **콘솔 에러 0** |
+| 로그아웃 | PASS | →/login 인증 해제 |
+| 보호 라우트 차단 | PASS | 비로그인 `/`·`/profile`→/login |
+
+> **콘솔 노트:** 비로그인 상태의 부트스트랩 `POST /auth/refresh`는 세션이 없으면 401을 반환하며, 브라우저가 이 네트워크 401을 콘솔 error로 기록(앱 예외 아님, 정상·기대된 동작). 로그인 후 새로고침 시에는 refresh가 성공해 콘솔 에러 0. React Router v7 future flag 경고 1건은 정보성.
 
 ### 남은 문제
 
-- 없음
+- **프론트 단위 테스트 러너 미설치(비차단).** `@testing-library/react`·`user-event`·`jsdom` 미설치, `frontend/package.json`에 `test` 스크립트 없음. RTL 테스트 파일(LoginForm/RegisterForm — 렌더·검증 에러·제출 핸들러)은 작성해 두었으나 실행 미구성. `frontend/tsconfig.json` include가 `["src"]`라 typecheck/build에는 무영향. **다음 작업: 프론트 테스트 러너(vitest+jsdom+RTL) 설정 후 이 테스트 활성화.** (사용자 지시 "테스트 완화 금지" 준수 — 가짜 통과 처리하지 않고 미실행으로 명시.)
+- 비로그인 부트스트랩 refresh 401 콘솔 로그(기대된 동작, 비차단). 필요 시 Step 9+에서 "세션 추정 플래그"로 첫 refresh 생략 최적화 가능.
+
+### 다음 Step에서 해야 할 일 (Step 9 — 메인 페이지)
+
+- MonthlyCalendar + WeeklyPlanBar + TodayPlanList + PlanCard + PlanDetailModal(K-08 ?planId=) + CalendarDayPopup + CreatePlanFAB.
+- 일정 API 연동(GET /plans, GET /plans/:id, PATCH /plans/:id/complete) + usePlans/usePlan/useCompletePlan + planStore/calendarStore.
+- Step 8 인증 기반 위에서 보호 라우트로 진입, Playwright P-01·P-03·P-04 흐름 검증.
 
 ---
 

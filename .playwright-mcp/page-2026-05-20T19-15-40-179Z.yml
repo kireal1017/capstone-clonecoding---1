@@ -1,0 +1,23 @@
+- generic [ref=e22]:
+  - banner [ref=e23]:
+    - generic [ref=e24]:
+      - link "PlanMate" [ref=e25] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e26]:
+        - link "오늘의 일정" [ref=e27] [cursor=pointer]:
+          - /url: /
+        - link "프로필" [ref=e28] [cursor=pointer]:
+          - /url: /profile
+        - button "로그아웃" [ref=e29] [cursor=pointer]
+  - main [ref=e30]:
+    - generic [ref=e31]:
+      - heading "오늘의 일정" [level=1] [ref=e32]
+      - region "월간 캘린더" [ref=e33]:
+        - heading "캘린더" [level=2] [ref=e34]
+        - paragraph [ref=e35]: 월간 캘린더 영역 (Step 9 구현 예정)
+      - region "주간 진행" [ref=e36]:
+        - heading "주간" [level=2] [ref=e37]
+        - paragraph [ref=e38]: 주간 진행 막대 영역 (Step 9 구현 예정)
+      - region "오늘 일정 목록" [ref=e39]:
+        - heading "오늘 일정" [level=2] [ref=e40]
+        - paragraph [ref=e41]: 오늘 일정 목록 영역 (Step 9 구현 예정)

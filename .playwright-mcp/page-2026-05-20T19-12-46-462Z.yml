@@ -1,0 +1,35 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - heading "PlanMate" [level=1] [ref=e6]
+    - paragraph [ref=e7]: 회원가입
+  - region "회원가입" [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]: 닉네임
+        - textbox "닉네임" [active] [ref=e12]:
+          - /placeholder: 홍길동
+          - text: 홍
+        - paragraph [ref=e13]: 닉네임은 2자 이상 입력해주세요.
+      - generic [ref=e14]:
+        - generic [ref=e15]: 이메일
+        - textbox "이메일" [ref=e16]:
+          - /placeholder: example@planmate.com
+          - text: not-an-email
+        - paragraph [ref=e27]: 올바른 이메일 형식이 아닙니다.
+      - generic [ref=e17]:
+        - generic [ref=e18]: 비밀번호
+        - textbox "비밀번호" [ref=e19]:
+          - /placeholder: ••••••••••••
+          - text: abc123xy
+        - paragraph [ref=e20]: 영문+숫자 포함 8자 이상
+      - generic [ref=e21]:
+        - generic [ref=e22]: 비밀번호 확인
+        - textbox "비밀번호 확인" [ref=e23]:
+          - /placeholder: ••••••••••••
+          - text: different99
+        - paragraph [ref=e28]: 비밀번호가 일치하지 않습니다.
+      - button "가입하기" [ref=e24] [cursor=pointer]
+  - paragraph [ref=e25]:
+    - text: 이미 계정이 있으신가요?
+    - link "로그인" [ref=e26] [cursor=pointer]:
+      - /url: /login

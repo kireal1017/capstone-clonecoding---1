@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd \\\"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\\\" && node ../node_modules/tsx/dist/cli.mjs prisma/seed.ts 2>&1\",\"timeout\":60000,\"description\":\"시드 스크립트 1차 실행\"}",
-  "error": "Exit code 1\nnode:internal/modules/cjs/loader:1401\r\n  const err = new Error(message);\r\n              ^\r\n\r\nError: Cannot find module 'C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest\\node_modules\\bcrypt\\lib\\binding\\napi-v3\\bcrypt_lib.node'\r\nRequire stack:\r\n- C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest\\node_modules\\bcrypt\\bcrypt.js\r\n- C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest\\backend\\prisma\\seed.ts\r\n    at node:internal/modules/cjs/loader:140...",
-  "timestamp": "2026-05-20T00:42:44.336Z",
+  "tool_name": "mcp__playwright__browser_fill_form",
+  "tool_input_preview": "{\"fields\":[{\"target\":\"textbox[name=\\\"이메일\\\"]\",\"name\":\"이메일\",\"type\":\"textbox\",\"value\":\"qa.step8.0520a@planmate.local\"},{\"target\":\"textbox[name=\\\"비밀번호\\\"]\",\"name\":\"비밀번호\",\"type\":\"textbox\",\"value\":\"wrongpass...",
+  "error": "### Error\nError: \"textbox[name=\"이메일\"]\" does not match any elements.",
+  "timestamp": "2026-05-20T19:15:00.960Z",
   "retry_count": 1
 }

@@ -1,14 +1,23 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useLogout } from '@/features/auth/hooks/useLogout';
 
 /**
  * 보호 영역 공통 레이아웃 — 헤더(앱 타이틀 + 내비 + 로그아웃) + main(Outlet).
  * Serene Productivity 토큰 기반의 절제된 스타일(소프트 보더 구분선, 800px 중앙 정렬).
  *
- * 로그아웃 버튼은 Step 7 골격에서는 authStore.clearAuth만 호출(API 미연동, Step 8).
+ * 로그아웃: useLogout → POST /auth/logout 후 clearAuth, /login 으로 이동.
  */
 function AppShell() {
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const navigate = useNavigate();
+  const { mutate: logoutMutate, isPending } = useLogout();
+
+  const handleLogout = (): void => {
+    logoutMutate(undefined, {
+      onSettled: () => {
+        navigate('/login', { replace: true });
+      },
+    });
+  };
 
   const navLinkClass = ({ isActive }: { isActive: boolean }): string =>
     isActive ? 'text-charcoal' : 'text-outline hover:text-charcoal';
@@ -29,10 +38,11 @@ function AppShell() {
             </NavLink>
             <button
               type="button"
-              onClick={clearAuth}
-              className="text-outline hover:text-charcoal"
+              onClick={handleLogout}
+              disabled={isPending}
+              className="text-outline hover:text-charcoal disabled:opacity-50"
             >
-              로그아웃
+              {isPending ? '로그아웃 중...' : '로그아웃'}
             </button>
           </nav>
         </div>

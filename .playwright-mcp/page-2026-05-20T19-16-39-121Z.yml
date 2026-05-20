@@ -1,0 +1,20 @@
+- generic [ref=e26]:
+  - banner [ref=e27]:
+    - heading "PlanMate" [level=1] [ref=e28]
+    - paragraph [ref=e29]: 차분한 생산성의 시작
+  - region "로그인" [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]: 이메일
+        - textbox "이메일" [ref=e34]:
+          - /placeholder: example@planmate.com
+      - generic [ref=e35]:
+        - generic [ref=e36]: 비밀번호
+        - textbox "비밀번호" [ref=e37]:
+          - /placeholder: ••••••••••••
+      - button "로그인" [ref=e38] [cursor=pointer]
+  - paragraph [ref=e39]:
+    - text: 계정이 없으신가요?
+    - link "회원가입" [ref=e40] [cursor=pointer]:
+      - /url: /register
+  - paragraph [ref=e41]: © 2026 PlanMate

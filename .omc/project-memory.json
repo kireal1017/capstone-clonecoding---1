@@ -18,8 +18,8 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": null,
-    "testCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\" && node ../node_modules/vitest/vitest.mjs run 2>&1 | tail -40; echo \"BACKEND_TEST_EXIT=${PIPESTATUS[0]}\"",
+    "buildCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest\" && node ./node_modules/typescript/bin/tsc -p frontend/tsconfig.json --noEmit 2>&1 | head -60",
+    "testCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\" && node ../node_modules/vitest/vitest.mjs run 2>&1 | tail -30; echo \"BACKEND_TEST_EXIT=$?\"",
     "lintCommand": "npm run lint",
     "devCommand": null,
     "scripts": {
@@ -121,8 +121,8 @@
     },
     {
       "path": "docs\\04-design\\api-spec.md",
-      "accessCount": 23,
-      "lastAccessed": 1779297855507,
+      "accessCount": 26,
+      "lastAccessed": 1779302887673,
       "type": "file"
     },
     {
@@ -168,15 +168,15 @@
       "type": "directory"
     },
     {
-      "path": "backend\\src\\services\\plan.service.ts",
-      "accessCount": 6,
-      "lastAccessed": 1779294846045,
+      "path": "docs\\05-harness\\harness.md",
+      "accessCount": 7,
+      "lastAccessed": 1779302886737,
       "type": "file"
     },
     {
-      "path": "docs\\05-harness\\harness.md",
+      "path": "backend\\src\\services\\plan.service.ts",
       "accessCount": 6,
-      "lastAccessed": 1779301941074,
+      "lastAccessed": 1779294846045,
       "type": "file"
     },
     {
@@ -312,6 +312,12 @@
       "type": "file"
     },
     {
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1779302924243,
+      "type": "file"
+    },
+    {
       "path": "backend\\eslint.config.mjs",
       "accessCount": 2,
       "lastAccessed": 1779286180367,
@@ -339,12 +345,6 @@
       "path": "docs\\03-prd\\prd.md",
       "accessCount": 2,
       "lastAccessed": 1779299492832,
-      "type": "file"
-    },
-    {
-      "path": "package.json",
-      "accessCount": 2,
-      "lastAccessed": 1779300005820,
       "type": "file"
     },
     {
