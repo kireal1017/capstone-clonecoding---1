@@ -1,0 +1,87 @@
+// PlanMate Prisma Schema
+// 근거: docs/04-design/data-model.md §2-4, §3-4, §4-4
+// 보완: design-review.md §6 (DB-01, DB-02, DB-03, DB-14, BE-01)
+//
+// 주의:
+// - 모든 타임스탬프 컬럼(createdAt, updatedAt, deletedAt)은 String 타입.
+//   애플리케이션에서 nowKST() 호출 결과를 명시 전달함 (DB-02, DB-14).
+// - @default(now())와 @updatedAt 절대 사용 금지 (SQLite의 CURRENT_TIMESTAMP가 UTC를
+//   반환하므로 KST 저장 정책과 충돌).
+// - SQLite FK 제약은 PrismaClient 초기화 시 PRAGMA foreign_keys = ON으로 활성화 (DB-01).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// User
+// ============================================================
+model User {
+  id               Int     @id @default(autoincrement())
+  email            String  @unique
+  passwordHash    String
+  nickname         String
+  avatarUrl        String?
+  refreshTokenHash String? // BE-01: 로그아웃 시 NULL, Refresh 시 새 hash로 교체
+  createdAt        String // 애플리케이션 nowKST() 필수 전달 (DB-02, DB-14)
+  updatedAt        String // 애플리케이션 nowKST() 필수 전달 (DB-02, DB-14)
+
+  plans      Plan[]
+  categories Category[]
+
+  @@map("users")
+}
+
+// ============================================================
+// Category
+// ============================================================
+model Category {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  name      String
+  color     String // HEX 형식 (예: "#7C3AED")
+  sortOrder Int    @default(0)
+  createdAt String // 애플리케이션 nowKST() 필수 전달 (DB-02, DB-14)
+  updatedAt String // 애플리케이션 nowKST() 필수 전달 (DB-02, DB-14)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plans Plan[]
+
+  @@unique([userId, name]) // DB-03: 동일 사용자 내 카테고리명 중복 금지
+  @@index([userId])
+  @@map("categories")
+}
+
+// ============================================================
+// Plan (일정/할 일)
+// ============================================================
+model Plan {
+  id          Int     @id @default(autoincrement())
+  userId      Int
+  title       String
+  dueDate     String // ISO 8601 (YYYY-MM-DD)
+  dueTime     String? // HH:mm (선택)
+  displayDate String // 사용자 지정 처리 예정일 (K-10=B)
+  categoryId  Int? // K-09=B: 카테고리 삭제 시 NULL ("미분류")
+  priority    String  @default("normal") // "high" | "normal" | "low"
+  memo        String?
+  isCompleted Boolean @default(false)
+  isRemind    Boolean @default(false) // K-07=B: 체크박스 UI만, 실제 알림 없음
+  createdAt   String // 애플리케이션 nowKST() 필수 전달
+  updatedAt   String // 애플리케이션 nowKST() 필수 전달
+  deletedAt   String? // Soft delete (NULL=활성, 값=삭제됨)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, displayDate])
+  @@index([userId, dueDate])
+  @@index([userId, isCompleted])
+  @@index([deletedAt])
+  @@map("plans")
+}

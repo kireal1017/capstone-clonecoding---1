@@ -1,0 +1,23 @@
+{
+  "name": "planmate",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "typecheck:frontend": "node ./node_modules/typescript/bin/tsc -p frontend/tsconfig.json --noEmit",
+    "typecheck:backend": "node ./node_modules/typescript/bin/tsc -p backend/tsconfig.json --noEmit",
+    "typecheck": "npm run typecheck:frontend && npm run typecheck:backend",
+    "lint:frontend": "node ./node_modules/eslint/bin/eslint.js --config frontend/eslint.config.mjs frontend --max-warnings=0",
+    "lint:backend": "node ./node_modules/eslint/bin/eslint.js --config backend/eslint.config.mjs backend --max-warnings=0",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"**/*.{ts,tsx,js,json,md}\"",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:backend": "npm --workspace backend run dev"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0"
+  }
+}

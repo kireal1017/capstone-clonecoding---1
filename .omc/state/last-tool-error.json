@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest\\\" && npm run lint 2>&1\",\"timeout\":120000,\"description\":\"lint 실행\"}",
+  "error": "Exit code 1\n\n> planmate@1.0.0 lint\n> npm run lint:frontend && npm run lint:backend\n\n\n> planmate@1.0.0 lint:frontend\n> node ./node_modules/eslint/bin/eslint.js --config frontend/eslint.config.mjs frontend --max-warnings=0\n\n\n> planmate@1.0.0 lint:backend\n> node ./node_modules/eslint/bin/eslint.js --config backend/eslint.config.mjs backend --max-warnings=0\n\n\nC:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest\\backend\\prisma\\seed.ts\n  25:3  warning  Unused eslint-disable directive (no pr...",
+  "timestamp": "2026-05-20T00:44:05.283Z",
+  "retry_count": 1
+}
