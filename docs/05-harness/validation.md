@@ -290,7 +290,11 @@ curl -X POST ... -d '{"name":"미팅","color":"#7C3AED","sort_order":6}'
 
 #### DELETE /api/v1/categories/:id — 삭제
 
-**기대 응답:** `204 No Content`
+**기대 응답:** `200 OK` + `{ success: true, data: { message: "삭제 완료", affectedPlans: N } }`
+
+> **일정 vs 카테고리 DELETE 응답 비교:**
+> - `DELETE /api/v1/plans/:id` → `204 No Content` (본문 없음, soft delete만 수행)
+> - `DELETE /api/v1/categories/:id` → `200 OK` + JSON 본문 (연결 일정의 `categoryId`를 NULL로 일괄 처리한 건수 `affectedPlans` 반환이 필요하므로 본문 있음)
 
 **SET NULL 검증:**
 ```sql
@@ -301,6 +305,10 @@ SELECT id FROM plans WHERE category_id = ?;
 SELECT id, category_id FROM plans WHERE id IN (...);
 -- 기대: category_id = NULL
 ```
+
+**응답 본문 검증:**
+- `affectedPlans`: NULL 처리된 일정 수 (0 이상의 정수)
+- 오류 시 `404 CATEGORY_NOT_FOUND` (타인 소유 카테고리 포함 — 존재 자체를 숨김)
 
 ### 3-4. 프로필 API (Step 6)
 

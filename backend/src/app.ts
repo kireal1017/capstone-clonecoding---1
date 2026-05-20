@@ -12,6 +12,8 @@ import { requestLogger } from './middlewares/requestLogger';
 import { errorHandler } from './middlewares/errorHandler';
 import { successResponse } from './types/api';
 import { authRouter } from './routes/auth.route';
+import { plansRouter } from './routes/plan.route';
+import { categoriesRouter } from './routes/category.route';
 
 const app: Express = express();
 
@@ -40,8 +42,10 @@ app.get('/api/v1/health', (_req, res) => {
   res.status(200).json(successResponse({ status: 'ok' }));
 });
 
-// 7) 도메인 라우터 (Step 3: 인증). plans/categories/profile는 Step 4+ 범위.
+// 7) 도메인 라우터 (Step 3: 인증, Step 4: 일정, Step 5: 카테고리). profile은 Step 6+ 범위.
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/plans', plansRouter);
+app.use('/api/v1/categories', categoriesRouter);
 
 // 8) 전역 에러 핸들러 — 반드시 마지막
 app.use(errorHandler);

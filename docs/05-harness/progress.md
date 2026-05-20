@@ -25,8 +25,8 @@
 | Step 1 | 백엔드(DB) | 완료 | 2026-05-20 | 2026-05-20T17:30:00+09:00 | Prisma init+migrate+seed 완료, 5개 기본 카테고리 idempotent 생성 확인 |
 | Step 2 | 백엔드(미들웨어) | 완료 | 2026-05-20T17:35:00+09:00 | 2026-05-20T18:25:00+09:00 | 미들웨어 5종 + AppError 계층 + jwt/password 유틸 + app/server, 단위 테스트 25건 통과. bcrypt→bcryptjs 채택(네이티브 빌드 회피) |
 | Step 3 | 백엔드(인증) | 완료 | - | 2026-05-20T23:59:10+09:00 | 37/37 통과 (통합 12 + 단위 25). C안: nowKST Intl 재구현 + jti UUID fix |
-| Step 4 | 백엔드(일정) | 미시작 | - | - | - |
-| Step 5 | 백엔드(카테고리) | 미시작 | - | - | - |
+| Step 4 | 백엔드(일정) | 완료 | 2026-05-21 | 2026-05-21T00:55:00+09:00 | 일정 API 6개 + 통합 26건 통과(전체 8파일 63건, 회귀 무). 완료 토글 경로 /complete 확정, 사용자별 격리·타인 404 PLAN_NOT_FOUND. verifier-1 검증: 15/15 PASS (2026-05-21T01:00+09:00). 문서 편차 2건(api-spec §4-5 DELETE 200vs204, §4-2 category_id 필수vs nullable) — 비차단 |
+| Step 5 | 백엔드(카테고리) | 완료 | 2026-05-21 | 2026-05-21T01:30:00+09:00 | 카테고리 API 4개 + 통합 25건 통과(전체 9파일 88건, 회귀 무). 수정=PUT 전체교체 확정, 사용자별 격리·타인 404 CATEGORY_NOT_FOUND, 중복명 409, 삭제 시 Plan.categoryId SetNull(affectedPlans 반환). DELETE 응답 200+{message,affectedPlans}(api-spec §5-4 채택). verifier-1 검증: 19/19 PASS (2026-05-21T01:40:00+09:00). 문서 편차 2건 → doc-fixer-1이 2026-05-21 정정 완료(validation §3-3 204→200, PUT/DELETE 에러표 AUTH_FORBIDDEN→CATEGORY_NOT_FOUND) |
 | Step 6 | 백엔드(프로필) | 미시작 | - | - | - |
 | Step 7 | 프론트(골격) | 미시작 | - | - | - |
 | Step 8 | 프론트(인증) | 미시작 | - | - | - |
@@ -463,103 +463,289 @@ cd backend && npm run test  # PASS — 7파일 37건 통과 (통합 12 + 단위 
 
 ## Step 4. 일정 API 6개
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** api-spec.md §4, backend-spec.md §8-1~§8-3, data-model.md §4, design-review.md BE-03·BE-04·DB-06·DB-07·DB-12
+- **상태:** 완료
+- **시작:** 2026-05-21
+- **완료:** 2026-05-21T00:55:00+09:00
+- **참조 문서:** api-spec.md §4, backend-spec.md §8-1~§8-3·§9-2, data-model.md §4, validation.md §3-2·§8, design-review.md BE-03·BE-04·DB-07
+
+### 확정 사항
+
+- **완료 토글 경로는 `/complete`로 확정** (api-spec.md §4-6 / validation.md P-06 기준). 요청서 초안의 `/completed`가 아님. → `PATCH /api/v1/plans/:id/complete`.
+- **타인 소유/미존재 일정은 일괄 404 `PLAN_NOT_FOUND`** 로 응답(403 소유권 노출 금지). api-spec §4-3~§4-6 표에는 403 AUTH_FORBIDDEN도 병기되어 있으나, 정보 비노출 원칙(Step 3 auth 패턴과 일관)에 따라 404로 통일.
+- 요청 본문은 api-spec §4-2/§4-4 요청 표 기준 **snake_case**(`due_date`/`due_time`/`display_date`/`category_id`/`is_remind`) 수용, 응답·DB는 **카멜케이스**(Prisma 필드 `dueDate`/`displayDate`/`categoryId`/`isCompleted`/`isRemind`/`memo`).
+- DELETE 응답은 **204**(본문 없음)으로 확정(validation.md §8-3 기준; api-spec §4-5의 200+message 표기 대신 204 채택).
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21 — `schemas/plan.schema.ts`: `CreatePlanSchema`(title 1~100, due_date/display_date YYYY-MM-DD, due_time HH:mm|null, category_id 양의정수|null, priority enum, memo 0~500|null, is_remind bool) + `superRefine`로 display_date≤due_date 교차검증(422 details[display_date]) / `UpdatePlanSchema`(전부 optional, 둘 다 제공 시 교차검증) / `GetPlansQuerySchema`(month, search, category·priority 단/다중값 배열 정규화, completed '0'|'1', uncategorized '1').
+- 2026-05-21 — `repositories/plan.repository.ts`: **모든 where에 `userId` + `deletedAt: null` 강제.** 목록은 month(displayDate 사전식 범위)·search(title|memo OR)·category/uncategorized OR 그룹·priority IN·completed AND 조합. 수정/삭제/토글은 `updateMany({ id, userId, deletedAt:null })` 영향행 0 → null(타인/미존재/삭제됨 동일 취급). 모든 타임스탬프 `nowKST()` 명시 전달.
+- 2026-05-21 — `services/plan.service.ts`: 서버 고정 정렬을 애플리케이션 계층에서 수행(SQLite가 priority CASE/NULLS LAST를 orderBy로 직접 표현 곤란) — isCompleted ASC → priority(high0/normal1/low2) → dueTime ASC NULLS LAST → createdAt ASC → id. category_id 지정 시 소유 카테고리 확인(아니면 404 CATEGORY_NOT_FOUND). 수정 시 최종 적용값으로 display_date≤due_date 재검증.
+- 2026-05-21 — `controllers/plan.controller.ts`: 얇은 컨트롤러. `:id` 비정수 → 404 PLAN_NOT_FOUND. 상태코드 목록/단건/수정/토글 200, 생성 201, 삭제 204.
+- 2026-05-21 — `routes/plan.route.ts`: `router.use(authMiddleware)`로 6개 전부 인증. list/create/update에 `validate` 부착. `app.ts`에 `/api/v1/plans` 마운트.
+- 2026-05-21 — `tests/integration/plans.test.ts`: 26건 작성. 인증없음 401 / 생성·null카테고리·타인카테고리404·422(title/날짜형식)·교차검증422·동일날짜통과 / 서버고정정렬(B→C→E→A→D, validation §8-2) / month·search·category OR·uncategorized·priority OR·completed 필터 / 단건·999404·비정수404 / 수정·교차검증422·타인404 / soft delete 204·DB deletedAt·목록제외·재삭제404 / 토글 false→true→false·타인404 / 사용자별 격리(목록 분리, 타인 단건 404).
+- 2026-05-21 — typecheck/lint/test 전부 통과. 회귀(auth 12 + 단위 25) 무영향 확인.
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (backend/src):**
+- `schemas/plan.schema.ts` — CreatePlanSchema / UpdatePlanSchema / GetPlansQuerySchema (Zod, snake_case 입력 + 교차검증)
+- `repositories/plan.repository.ts` — plans Prisma 쿼리 (where userId+deletedAt 강제, nowKST 명시)
+- `services/plan.service.ts` — 비즈니스 로직 + 서버 고정 정렬 + 카테고리 소유권 검증 + 응답 뷰 매핑
+- `controllers/plan.controller.ts` — 얇은 컨트롤러 (상태코드·successResponse)
+- `routes/plan.route.ts` — 6개 엔드포인트 (전부 authMiddleware)
 
-- 예시: `backend/src/routes/plans.route.ts`
-- 예시: `backend/src/controllers/plans.controller.ts`
-- 예시: `backend/src/services/plans.service.ts`
-- 예시: `backend/src/repositories/plan.repository.ts`
-- 예시: `backend/src/schemas/plan.schema.ts`
-- 예시: `backend/tests/integration/plans.test.ts`
+**수정:**
+- `src/app.ts` — `plansRouter`를 `/api/v1/plans`에 마운트
+
+**생성 (backend/tests/integration):**
+- `plans.test.ts` — 일정 API 통합 테스트 26건
+
+### 구현된 일정 API 6개
+
+| # | 메서드 | 경로 | 상태코드 | 기능 |
+|---|---|---|---|---|
+| P-01 | GET | `/api/v1/plans` | 200 | 목록 조회 (month/search/category/uncategorized/priority/completed 필터 + 서버 고정 정렬) |
+| P-02 | POST | `/api/v1/plans` | 201 | 등록 |
+| P-03 | GET | `/api/v1/plans/:id` | 200 | 단건 조회 |
+| P-04 | PATCH | `/api/v1/plans/:id` | 200 | 부분 수정 |
+| P-05 | DELETE | `/api/v1/plans/:id` | 204 | soft delete (deletedAt=nowKST()) |
+| P-06 | PATCH | `/api/v1/plans/:id/complete` | 200 | 완료 토글 |
+
+### 사용자별 데이터 격리 / 타인 리소스 404 처리 방식
+
+- **격리:** `plan.repository.ts`의 모든 쿼리 where에 `userId`(+`deletedAt: null`) 포함. 목록은 `findManyByUser(userId, ...)`, 단건은 `findFirst({ id, userId, deletedAt: null })`, 수정/삭제/토글은 `updateMany({ id, userId, deletedAt: null })`로 타인 행이 절대 매칭되지 않음.
+- **타인 리소스 404:** 단건/수정/삭제/토글에서 조회·영향행이 0이면 `NotFoundError('일정을 찾을 수 없습니다.', 'PLAN_NOT_FOUND')` throw. 소유권 존재 여부를 403으로 노출하지 않고 미존재와 동일하게 처리.
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+# 루트: 통합 검증
+npm run typecheck     # PASS — 에러 0건 (frontend + backend)
+npm run lint          # PASS — 에러/warning 0건 (frontend + backend)
 
-- 예시: `cd backend && npm run test -- plans`
-- 예시: `cd backend && npm run typecheck`
+# backend: 전체 테스트
+cd backend && npm run test  # PASS — 8파일 63건 (plans 26 + auth 12 + 단위 25)
+```
 
 ### 검증 결과
 
-- [ ] GET /plans → 200, 서버 고정 정렬 순서 확인 (is_completed→priority→due_time→created_at)
-- [ ] GET /plans?month=2026-05 → display_date 기준 월 필터 동작 확인
-- [ ] GET /plans?search=키워드 → title+memo LIKE 검색 동작 확인
-- [ ] GET /plans?category=1&category=2 → OR 필터 동작 확인
-- [ ] GET /plans?uncategorized=1 → category_id IS NULL 필터 확인
-- [ ] POST /plans → 201, display_date≤due_date 정상 케이스 통과
-- [ ] POST /plans (display_date > due_date) → 422, details 배열에 display_date 에러 포함
-- [ ] GET /plans/:id (타인 ID) → 404 PLAN_NOT_FOUND (격리 확인)
-- [ ] PATCH /plans/:id → 200, updated_at KST 갱신 확인
-- [ ] DELETE /plans/:id → 204, DB deleted_at 채워짐 확인
-- [ ] DELETE 후 GET /plans → 목록에서 제외 확인
-- [ ] PATCH /plans/:id/complete → is_completed 토글 확인
-- [ ] 모든 쿼리에 where: { userId } 조건 포함 확인 (코드 리뷰)
-- [ ] supertest 통합 테스트 전체 통과
-- [ ] validation.md §3-2·§8 기준 통과
+- [x] GET /plans → 200, 서버 고정 정렬 순서 확인 (B→C→E→A→D, validation.md §8-2 데이터)
+- [x] GET /plans?month=2026-05 → display_date 기준 월 필터 동작 확인
+- [x] GET /plans?search=키워드 → title+memo LIKE 검색 동작 확인
+- [x] GET /plans?category=1&category=2 → OR 필터 동작 확인
+- [x] GET /plans?uncategorized=1 (+category 혼합) → category_id IS NULL OR IN 확인
+- [x] GET /plans?priority OR / completed 단일 필터 확인
+- [x] POST /plans → 201, display_date≤due_date 정상 케이스 통과 (동일 날짜 포함)
+- [x] POST /plans (display_date > due_date) → 422, details 배열에 display_date 에러 포함
+- [x] POST /plans (타인 category_id) → 404 CATEGORY_NOT_FOUND
+- [x] GET /plans/:id (타인 ID / 미존재 / 비정수) → 404 PLAN_NOT_FOUND
+- [x] PATCH /plans/:id → 200, updatedAt KST(+09:00) 갱신 확인 / 타인 → 404
+- [x] PATCH /plans/:id (display_date만 변경해 기존 due_date 초과) → 422
+- [x] DELETE /plans/:id → 204, DB deletedAt 채워짐 / 목록·단건 제외 / 재삭제 404
+- [x] PATCH /plans/:id/complete → isCompleted false→true→false 토글 / 타인 → 404
+- [x] 모든 쿼리에 where: { userId, deletedAt: null } 조건 포함 확인 (코드 리뷰)
+- [x] 사용자별 격리: 다른 사용자 일정 목록 미노출 + 타인 단건 404
+- [x] supertest 통합 테스트 전체 통과 (plans 26건)
+- [x] Step 0~3 회귀 무영향 (auth 12 + 단위 25 통과)
+- [x] typecheck/lint 통과 (any/@ts-ignore 0, skip 테스트 0)
+- [x] validation.md §3-2·§8 기준 통과
 
 ### 남은 문제
 
-- 없음
+- 없음 — Step 4 DoD 전체 통과.
+
+---
+
+### Step 4 독립 검증 결과 (verifier-1, 2026-05-21T01:00:16+09:00)
+
+**15개 기준 판정표:**
+
+| # | 기준 | 판정 | 근거 |
+|---|---|---|---|
+| 1 | 일정 API 6개만 구현 | PASS | plan.route.ts:19~35 — GET/POST/GET:id/PATCH:id/DELETE:id/PATCH:id/complete 정확히 6개 |
+| 2 | 카테고리/프로필/프론트 미구현 | PASS | git status 확인: plan.* 5파일+app.ts 수정만. 범위 외 파일 없음 |
+| 3 | 모든 일정 API에 authMiddleware 적용 | PASS | plan.route.ts:17 `router.use(authMiddleware)` — 6개 전부 커버 |
+| 4 | 모든 Plan 조회/수정/삭제 where에 userId 포함 | PASS | plan.repository.ts:39,89,151,169,188 — 전 함수 `userId`+`deletedAt:null` 강제 |
+| 5 | 타인 리소스 접근 404 처리 (403 미노출) | PASS | plan.service.ts:125,174,221,229 — PLAN_NOT_FOUND(404) 통일, 403 없음. 테스트 26건 확인 |
+| 6 | 생성/수정 입력 검증이 api-spec §4-2·§4-4와 일치 | PASS | plan.schema.ts — title 1~100, due_date/display_date YYYY-MM-DD regex, priority enum, memo 0~500, category_id nullable optional. 요청 snake_case / 응답 camelCase 일치 |
+| 7 | completed 변경 API(/complete) 정상 동작 | PASS | plan.repository.ts:181~193 — 토글+updatedAt nowKST(). 테스트: false→true→false 확인 |
+| 8 | nowKST() 기반 timestamp 정책 유지 | PASS | plan.repository.ts:110,124,153,168,188 — create/update/delete/toggle 모두 nowKST() 명시. @default(now())/@updatedAt 없음 |
+| 9 | Prisma schema·migration 미수정 | PASS | `git diff HEAD -- backend/prisma/` 출력 없음 — 변경 없음 확인 |
+| 10 | npm run typecheck 통과 | PASS | 실행 결과: frontend+backend 에러 0건 |
+| 11 | npm run lint 통과 | PASS | 실행 결과: frontend+backend 에러/warning 0건 |
+| 12 | cd backend; npm run test 통과 | PASS | 8파일 63건 전체 통과 (plans 26 + auth 12 + 단위 25) |
+| 13 | 인증 API 테스트 회귀 없이 통과 | PASS | auth.test.ts 12건 + 단위 25건 모두 통과, 회귀 없음 |
+| 14 | Step 4 범위 밖 파일 미수정 | PASS | git status: 범위 외 소스 파일 수정 없음 (.omc/** 내부 상태 파일만 변경됨) |
+| 15 | progress.md에 Step 4 결과 기록 | PASS | 기존 작성 완료 + 본 검증 결과 추가 기록 |
+
+**설계 편차 2건 평가:**
+
+(a) **DELETE 응답: 204 vs api-spec §4-5의 200+message**
+- api-spec.md §4-5(라인 509): `200 OK` + `{ "data": { "message": "삭제 완료" } }` 명시
+- validation.md §8-3(라인 734): `204 No Content` 명시
+- 구현: 204 채택 (plan.controller.ts:70, plan.route.ts:32)
+- 평가: 문서 간 불일치 존재. validation.md §8-3이 구현 정본으로 채택됨. api-spec.md §4-5 수정 필요(문서 보완 과제). 기능 동작은 정상이며 204는 REST 관례상 더 올바른 선택이므로 비차단 이슈.
+
+(b) **category_id: nullable 구현 vs api-spec §4-2 표의 필수(✓)**
+- api-spec.md §4-2 요청 표: `category_id` 필수(✓) 표기
+- data-model.md §4: `category_id INTEGER NULL` — NULL 허용, K-09=B(SET NULL) 명시
+- 구현: `z.number().nullable().optional()` — nullable+optional (plan.schema.ts:38~41)
+- 평가: data-model.md(K-09=B)와 구현이 정합함. api-spec.md §4-2의 필수(✓) 표기가 오기로 보임. 카테고리 없이 생성 테스트(plans.test.ts:114) 통과 확인. api-spec.md 수정 필요(문서 보완 과제). 기능 동작은 data-model 기준으로 올바름.
+
+**발견된 문제 목록 (수정 금지 — 보고용):**
+
+1. api-spec.md §4-5: DELETE 응답이 200+message로 기재되어 있으나 validation.md §8-3 및 구현은 204. 문서 정합성 보완 필요.
+2. api-spec.md §4-2: `category_id` 필수(✓) 표기가 data-model.md K-09=B(NULL 허용)와 불일치. api-spec 수정 필요.
+3. (비차단) api-spec.md §4-3·§4-4·§4-5·§4-6: 에러 표에 `AUTH_FORBIDDEN 403` 병기되어 있으나 구현은 정책적으로 404 통일. 문서와 구현 간 의도적 편차로 진행 기록에 명시 필요.
 
 ---
 
 ## Step 5. 카테고리 API 4개
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** api-spec.md §5, backend-spec.md §8-4, data-model.md §3, design-review.md DB-03·DB-09
+- **상태:** 완료
+- **시작:** 2026-05-21
+- **완료:** 2026-05-21T01:30:00+09:00
+- **참조 문서:** api-spec.md §5, backend-spec.md §8-4, data-model.md §3, design-review.md DB-03·DB-09, validation.md §3-3·§4
+
+### 확정 사항
+
+- **카테고리 수정 엔드포인트는 PUT /api/v1/categories/:id 전체 교체 방식으로 확정** (api-spec.md §5-3 FE-01 / validation.md §3-3). 요청 본문에 `name`·`color`·`sort_order` **모두 필수**. 부분 업데이트(PATCH) 아님 — 일정 수정(`PATCH /plans/:id`)과 메서드가 다름.
+- **타인 소유/미존재 카테고리는 일괄 404 `CATEGORY_NOT_FOUND`** 로 응답(403 소유권 노출 금지). api-spec §5-3·§5-4 표에는 `AUTH_FORBIDDEN 403`도 병기되어 있으나, 정보 비노출 원칙(Step 3 auth / Step 4 plans 패턴과 일관)에 따라 404로 통일.
+- **DELETE 응답은 200 + `{ message: "삭제 완료", affectedPlans }`** 로 확정(api-spec.md §5-4 채택). validation.md §3-3은 204 No Content로 표기하나, api-spec §5-4가 `affectedPlans`(NULL 처리된 일정 수) 페이로드를 명시 요구하므로 api-spec을 정본으로 채택. 문서 간 편차는 아래 "남은 문제"에 기록.
+- 요청 본문은 snake_case(`sort_order`) 수용, 응답·DB는 카멜케이스(Prisma 필드 `sortOrder`).
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21 — `schemas/category.schema.ts`: `CreateCategorySchema`(name 1~30, color HEX #RRGGBB 정규식 필수, sort_order 선택 정수≥0) / `UpdateCategorySchema`(PUT 전체교체 — name·color·sort_order 모두 필수).
+- 2026-05-21 — `repositories/category.repository.ts`: **모든 where에 `userId` 강제.** 목록 sortOrder ASC(동률 id ASC). 수정은 `updateMany({ id, userId })` 영향행 0 → null(타인/미존재 동일 취급). 삭제는 `deleteMany({ id, userId })` + 삭제 직전 `plan.count({ categoryId: id })`로 affectedPlans 집계. P2002(@@unique [userId,name]) 식별 헬퍼 `isUniqueConstraintError`. 모든 타임스탬프 `nowKST()` 명시 전달.
+- 2026-05-21 — `services/category.service.ts`: userId 기준 비즈니스 로직. POST에서 sort_order 생략 시 `maxSortOrderForUser+1`(없으면 1). P2002 캐치 → 409 `CATEGORY_NAME_ALREADY_EXISTS`. PUT은 사전 조회로 404 판정 후 수정(P2002도 409로 변환). 응답 뷰 매핑.
+- 2026-05-21 — `controllers/category.controller.ts`: 얇은 컨트롤러. `:id` 비정수 → 404 CATEGORY_NOT_FOUND. 상태코드 목록/수정/삭제 200, 생성 201. 삭제 응답 `{ message, affectedPlans }`.
+- 2026-05-21 — `routes/category.route.ts`: `router.use(authMiddleware)`로 4개 전부 인증. POST/PUT에 `validate` 부착. `app.ts`에 `categoriesRouter`를 `/api/v1/categories` 마운트.
+- 2026-05-21 — `tests/integration/categories.test.ts`: 25건 작성. 인증없음 401(4개 엔드포인트) / 목록 기본 5개 sortOrder 정렬·신규 삽입 정렬 / 생성 201·자동 sort_order·중복명 409·HEX 422·이름누락 422·31자 422·사용자간 동일명 허용(격리) / PUT 전체교체 200·필드누락 422·타카테고리 동일명 409·자기자신 200·미존재 404·비정수 404·타인 404 / DELETE 200+affectedPlans·**SetNull 검증(Plan 2건 연결→삭제→categoryId NULL, affectedPlans=2, DB+API 양쪽 확인)**·미존재 404·타인 404 미삭제 / 사용자별 격리 목록.
+- 2026-05-21 — typecheck/lint/test 전부 통과. 회귀(plans 26 + auth 12 + 단위 25) 무영향 확인.
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (backend/src):**
+- `schemas/category.schema.ts` — CreateCategorySchema / UpdateCategorySchema (Zod, snake_case 입력, HEX 정규식, PUT 전체교체 모두 필수)
+- `repositories/category.repository.ts` — categories Prisma 쿼리 (where userId 강제, nowKST 명시, P2002 식별, deleteMany+affectedPlans 집계)
+- `services/category.service.ts` — 비즈니스 로직 (sort_order 자동 결정, 중복명 409, 404 통일, 응답 뷰 매핑)
+- `controllers/category.controller.ts` — 얇은 컨트롤러 (상태코드·successResponse·삭제 affectedPlans)
+- `routes/category.route.ts` — 4개 엔드포인트 (전부 authMiddleware, POST/PUT validate)
 
-- 예시: `backend/src/routes/categories.route.ts`
-- 예시: `backend/src/controllers/categories.controller.ts`
-- 예시: `backend/src/services/categories.service.ts`
-- 예시: `backend/src/repositories/category.repository.ts`
-- 예시: `backend/src/schemas/category.schema.ts`
-- 예시: `backend/tests/integration/categories.test.ts`
+**수정:**
+- `src/app.ts` — `categoriesRouter`를 `/api/v1/categories`에 마운트
+
+**생성 (backend/tests/integration):**
+- `categories.test.ts` — 카테고리 API 통합 테스트 25건
+
+### 구현된 카테고리 API 4개
+
+| # | 메서드 | 경로 | 상태코드 | 기능 |
+|---|---|---|---|---|
+| C-01 | GET | `/api/v1/categories` | 200 | 목록 조회 (sortOrder ASC) |
+| C-02 | POST | `/api/v1/categories` | 201 | 생성 (sort_order 생략 시 최대값+1, 중복명 409) |
+| C-03 | PUT | `/api/v1/categories/:id` | 200 | 전체 교체 수정 (name·color·sort_order 모두 필수) |
+| C-04 | DELETE | `/api/v1/categories/:id` | 200 | 삭제 (`{ message, affectedPlans }`, 연결 Plan.categoryId SetNull) |
+
+### 사용자별 데이터 격리 / 타인 리소스 404 처리 방식
+
+- **격리:** `category.repository.ts`의 모든 쿼리 where에 `userId` 포함. 목록 `findManyByUser(userId)`, 단건 `findFirst({ id, userId })`, 수정 `updateMany({ id, userId })`, 삭제 `deleteMany({ id, userId })`로 타인 행이 절대 매칭되지 않음. 중복명 제약 `@@unique([userId, name])`는 사용자 경계 안에서만 적용되어 서로 다른 사용자는 동일명 카테고리 생성 가능(테스트로 확인).
+- **타인 리소스 404:** 수정/삭제에서 조회·영향행이 0이면 `NotFoundError('카테고리를 찾을 수 없습니다.', 'CATEGORY_NOT_FOUND')` throw. 소유권 존재 여부를 403으로 노출하지 않고 미존재와 동일하게 처리.
+
+### 카테고리 삭제 시 Plan.categoryId 처리 방식 (SetNull)
+
+- Prisma schema의 `Plan.category` 관계가 `onDelete: SetNull`로 정의되어 있고, `config/prisma.ts`에서 `PRAGMA foreign_keys = ON`이 활성화되어 있어, 카테고리 레코드를 `prisma.category.deleteMany`로 삭제하면 DB가 해당 카테고리를 참조하던 모든 `plans.categoryId`를 자동으로 NULL로 설정한다(애플리케이션 측 별도 UPDATE 불필요).
+- `affectedPlans`는 삭제 직전 `prisma.plan.count({ where: { categoryId: id } })`로 집계해 응답에 포함한다(api-spec §5-4).
+- 통합 테스트 "삭제 후 연결 Plan.categoryId = NULL"에서 카테고리에 연결된 일정 2건 생성 → 카테고리 삭제 → `affectedPlans=2` 응답 + DB 직접 조회(`prisma.plan.findUniqueOrThrow`)와 GET /plans/:id API 양쪽에서 `categoryId`/`category`가 NULL임을 검증.
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+# 루트: 통합 검증
+npm run typecheck     # PASS — 에러 0건 (frontend + backend)
+npm run lint          # PASS — 에러/warning 0건 (frontend + backend)
 
-- 예시: `cd backend && npm run test -- categories`
-- 예시: `cd backend && npm run typecheck`
+# backend: 전체 테스트
+cd backend && npm run test  # PASS — 9파일 88건 (categories 25 + plans 26 + auth 12 + 단위 25)
+```
 
 ### 검증 결과
 
-- [ ] GET /categories → 200, sort_order 오름차순 반환 확인
-- [ ] POST /categories → 201, (userId, name) UNIQUE 제약 동작 확인
-- [ ] POST /categories (중복명) → 409 CATEGORY_NAME_ALREADY_EXISTS (Prisma P2002 → AppError 변환)
-- [ ] PUT /categories/:id → 200, name·color·sort_order 전체 교체 확인
-- [ ] PUT /categories/:id (다른 카테고리와 동일명) → 409 CATEGORY_NAME_ALREADY_EXISTS
-- [ ] DELETE /categories/:id → 204
-- [ ] DELETE 후 연결 plans.category_id = NULL 확인 (DB 직접 조회)
-- [ ] PRAGMA foreign_keys = ON 없을 경우 SET NULL 미동작 → 활성화 상태 재확인
-- [ ] 타인 소유 category_id로 PUT/DELETE → 404 CATEGORY_NOT_FOUND
-- [ ] supertest 통합 테스트 전체 통과
-- [ ] validation.md §3-3·§4 기준 통과
+- [x] GET /categories → 200, sortOrder 오름차순 반환 확인 (기본 5개 + 신규 삽입 정렬)
+- [x] POST /categories → 201, (userId, name) UNIQUE 제약 동작 확인 / sort_order 생략 시 최대값+1
+- [x] POST /categories (중복명) → 409 CATEGORY_NAME_ALREADY_EXISTS (Prisma P2002 → AppError 변환)
+- [x] PUT /categories/:id → 200, name·color·sort_order 전체 교체 확인 / 필드 누락 시 422 (전체 교체)
+- [x] PUT /categories/:id (다른 카테고리와 동일명) → 409 CATEGORY_NAME_ALREADY_EXISTS / 자기 자신 동일명 유지 200
+- [x] DELETE /categories/:id → 200 + `{ message, affectedPlans }` (api-spec §5-4)
+- [x] DELETE 후 연결 plans.categoryId = NULL 확인 (DB 직접 조회 + GET /plans/:id API 양쪽, affectedPlans=2)
+- [x] PRAGMA foreign_keys = ON 상태에서 SET NULL 동작 확인 (config/prisma.ts 기 활성화 — SetNull 테스트 통과로 재확인)
+- [x] HEX 색상 형식 오류 → 422 VALIDATION_FAILED (details에 color)
+- [x] 타인 소유 카테고리로 PUT/DELETE → 404 CATEGORY_NOT_FOUND (403 미노출, 타인 DELETE 후 미삭제 확인)
+- [x] 비정수/미존재 :id → 404 CATEGORY_NOT_FOUND
+- [x] 사용자별 격리: 다른 사용자 카테고리 목록 미노출 / 사용자 간 동일명 생성 허용
+- [x] supertest 통합 테스트 전체 통과 (categories 25건)
+- [x] Step 0~4 회귀 무영향 (plans 26 + auth 12 + 단위 25 통과)
+- [x] typecheck/lint 통과 (any/@ts-ignore 0, skip/완화 테스트 0)
+- [x] 일정 API 코드·Prisma schema/migration·lib/defaultCategories.ts·seed 무수정 (테스트에서 Plan API 호출만 사용)
+- [x] validation.md §3-3·§4 기준 통과 (DELETE 응답 코드는 api-spec §5-4 채택 — 아래 편차 기록)
 
-### 남은 문제
+### 남은 문제 / 문서 편차 (수정 금지 — 보고용)
 
-- 없음
+1. **DELETE 응답 코드 문서 편차 (비차단)** — api-spec.md §5-4는 `200 OK` + `{ message, affectedPlans }`, validation.md §3-3은 `204 No Content`로 상이하게 기재. 구현은 api-spec §5-4(200+페이로드)를 채택 — `affectedPlans`(SetNull된 일정 수) 반환이 명시 요구사항이므로 204(본문 없음)와 양립 불가. validation.md §3-3 또는 api-spec.md §5-4 중 하나로 문서 정합성 보완 필요.
+2. **PUT/DELETE 에러 표의 AUTH_FORBIDDEN(403) 병기 (의도적 편차)** — api-spec.md §5-3·§5-4 에러 표에 `AUTH_FORBIDDEN 403`이 병기되어 있으나, 정보 비노출 원칙(Step 3·4와 일관)에 따라 구현은 타인/미존재를 404 CATEGORY_NOT_FOUND로 통일. 문서와 구현 간 의도적 편차로 기록.
+
+### 다음 Step에서 해야 할 일 (Step 6 — 프로필 API 4개)
+
+- **본 작업 (harness.md §3 Step 6 범위):** `routes/profile.route.ts`(GET/PATCH/PATCH password/POST avatar, 전부 authMiddleware) · `controllers/profile.controller.ts` · `services/profile.service.ts` · `middlewares/upload.ts`(multer) · `schemas/profile.schema.ts` · `tests/integration/profile.test.ts`.
+- **활용 가능한 산출물:** `authMiddleware`, `validate`, `successResponse`, AppError(`InvalidCredentialsError`/`ValidationError`/`BadRequestError`), `hashPassword`/`verifyPassword`(bcryptjs), `nowKST()`, `user.repository.ts`.
+- **사전 권고:** 아바타 저장 경로 `/uploads/avatars/{userId}_{timestamp}.{ext}`, 5MB·jpg/png/webp 제한(FILE_TOO_LARGE 400 / INVALID_FILE_TYPE 400). 비밀번호 변경 후 기존 비밀번호 로그인 401 검증.
+
+---
+
+### Step 5 독립 검증 결과 (verifier-1, 2026-05-21T01:40:00+09:00)
+
+**19개 기준 판정표:**
+
+| # | 기준 | 판정 | 근거 (파일:라인) |
+|---|---|---|---|
+| 1 | 카테고리 API 4개만 구현 (C-01~C-04) | PASS | category.route.ts:19~29 — GET/POST/PUT:id/DELETE:id 정확히 4개 |
+| 2 | 프로필/프론트 미구현 (범위 밖 파일 미수정) | PASS | git status: category.* 5파일+app.ts 수정만. profile/frontend 미생성 확인 |
+| 3 | 모든 카테고리 API에 authMiddleware 적용 | PASS | category.route.ts:17 `router.use(authMiddleware)` — 4개 전부 커버 |
+| 4 | 모든 Category 조회/수정/삭제 where에 userId 포함 | PASS | category.repository.ts:23(findMany), :34(findFirst), :89(updateMany), :119(deleteMany) — 전 함수 userId 강제 |
+| 5 | 타인 리소스 접근 404 처리 (403 미노출) | PASS | category.service.ts:93,104,132 — CATEGORY_NOT_FOUND(404) 통일, 403 없음. 테스트 25건 확인 |
+| 6 | C-01 GET /categories → 200, sortOrder ASC 정렬 | PASS | category.repository.ts:24 `orderBy:[{sortOrder:'asc'},{id:'asc'}]`. 테스트: 기본5개 sortOrder[1,2,3,4,5] 확인 |
+| 7 | C-02 POST /categories → 201, sort_order 생략 시 max+1 | PASS | category.service.ts:57~59 `(max??0)+1`. 테스트: 기본5개 후 6 자동 배정 확인 |
+| 8 | C-02 중복명 → 409 CATEGORY_NAME_ALREADY_EXISTS | PASS | category.service.ts:71~75 P2002→ConflictError 변환. 테스트: 기본"미팅" 재생성 409 확인 |
+| 9 | C-03 PUT 전체 교체 (name·color·sort_order 모두 필수) | PASS | UpdateCategorySchema: sort_order 비optional(category.schema.ts:42~47). 테스트: 누락 시 422 details에 sort_order 확인 |
+| 10 | C-03 동일명 타 카테고리 변경 → 409 / 자기자신 → 200 | PASS | category.service.ts:110~114 P2002→409. 테스트: 타카테고리 동일명 409·자기자신 200 양쪽 확인 |
+| 11 | C-04 DELETE → 200 + { message, affectedPlans } | PASS | category.controller.ts:65~68 `res.status(200).json(successResponse({message:'삭제 완료',affectedPlans}))` |
+| 12 | C-04 삭제 후 Plan.categoryId SetNull + affectedPlans 반환 | PASS | category.repository.ts:117 삭제 전 plan.count 집계. 테스트: 2건 연결→삭제→affectedPlans=2, DB+API 양쪽 categoryId=null 확인 |
+| 13 | HEX 색상 형식 오류 → 422 (details에 color) | PASS | category.schema.ts:17~19 `/^#[0-9a-fA-F]{6}$/` 정규식. 테스트: '#' 없는 색상 422+details.color 확인 |
+| 14 | nowKST() 기반 timestamp 정책 유지 | PASS | category.repository.ts:60,61,68,95 — create/update 모두 nowKST() 명시. @default(now())/@updatedAt 없음 |
+| 15 | Prisma schema·migration 미수정 | PASS | `git diff HEAD -- backend/prisma/` 출력 없음 — 변경 없음 확인 |
+| 16 | npm run typecheck 통과 | PASS | 실행 결과: frontend+backend 에러 0건 |
+| 17 | npm run lint 통과 | PASS | 실행 결과: frontend+backend 에러/warning 0건 |
+| 18 | cd backend; npm run test 통과 | PASS | 9파일 88건 전체 통과 (categories 25 + plans 26 + auth 12 + 단위 25) |
+| 19 | Step 0~4 회귀 무영향 | PASS | plans 26건 + auth 12건 + 단위 25건 모두 통과, 회귀 없음 |
+
+**설계 편차 평가:**
+
+(a) **DELETE 응답: 200+{message,affectedPlans} vs validation.md §3-3의 204 No Content**
+- api-spec.md §5-4: `200 OK` + `{ message, affectedPlans }` 명시
+- validation.md §3-3: `204 No Content` 명시
+- 구현: 200 채택 (category.controller.ts:65~68)
+- 평가: affectedPlans 페이로드 반환이 api-spec §5-4의 명시 요구사항이므로 204(본문 없음)와 양립 불가. api-spec §5-4를 정본으로 채택한 결정은 타당하며 비차단. validation.md §3-3 문서 보완 과제.
+
+(b) **PUT/DELETE 에러 표의 AUTH_FORBIDDEN(403) 병기 (의도적 편차)**
+- api-spec.md §5-3·§5-4 에러 표: `AUTH_FORBIDDEN 403` 병기
+- 구현: 정보 비노출 원칙(Step 3·4와 일관)으로 타인/미존재를 404 CATEGORY_NOT_FOUND 통일
+- 평가: 보안상 올바른 설계 선택. 의도적 편차로 기록.
+
+**발견된 문제 목록 (수정 금지 — 보고용):**
+
+1. (비차단) api-spec.md §5-4: DELETE 응답 코드가 validation.md §3-3과 상이(200 vs 204). 문서 정합성 보완 필요.
+2. (비차단) api-spec.md §5-3·§5-4: 에러 표에 AUTH_FORBIDDEN 403 병기되어 있으나 구현은 정책적으로 404 통일. 의도적 편차로 문서 보완 권고.
 
 ---
 
@@ -1009,6 +1195,7 @@ cd backend && npm run test  # PASS — 7파일 37건 통과 (통합 12 + 단위 
 | 2026-05-20T17:00:00+09:00 | **Step 0 완료** — frontend/backend 워크스페이스 부트스트랩, ESLint v9 flat config, OneDrive+한글 경로 우회(node 직접 호출), typecheck/lint 통과 |
 | 2026-05-20T17:30:00+09:00 | **Step 1 완료** — Prisma schema(User/Category/Plan) + init 마이그레이션 + dev.db + 5개 기본 카테고리 idempotent 시드. DB-01/02/03/14·BE-01·K-02=B·K-03=A·K-09=B 모두 반영 |
 | 2026-05-20T18:25:00+09:00 | **Step 2 완료** — 공통 미들웨어 5종(authMiddleware/errorHandler/validate/requestLogger/rateLimiter) + AppError 계층 + jwt/password 유틸 + env/api/express 타입 + app/server. 단위 테스트 25건 통과. **bcrypt→bcryptjs 채택**(네이티브 빌드 회피, cost 12 유지) — 전역 남은 문제 1·2번 해소(우회) |
+| 2026-05-21 | **api-spec.md 문서 오기 3건 정정** (코드 무수정) — (1) §4-5 DELETE 응답 200+body→204 No Content(validation.md §8-3 기준); (2) §4-2 POST category_id 필수(✓)→선택 integer\|null(data-model.md K-09=B NULL 허용); (3) §4-3·§4-4·§4-5·§4-6 에러 표 AUTH_FORBIDDEN 403 제거→PLAN_NOT_FOUND 404 통일 + 정보 비노출 정책 명시(validation.md §8-3: 403 반환 금지) |
 
 ---
 

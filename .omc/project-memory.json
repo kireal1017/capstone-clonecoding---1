@@ -115,20 +115,44 @@
   "hotPaths": [
     {
       "path": "docs\\05-harness\\progress.md",
-      "accessCount": 22,
-      "lastAccessed": 1779290990493,
+      "accessCount": 46,
+      "lastAccessed": 1779295652809,
       "type": "file"
     },
     {
-      "path": "backend\\package.json",
-      "accessCount": 8,
-      "lastAccessed": 1779288844189,
+      "path": "docs\\04-design\\api-spec.md",
+      "accessCount": 20,
+      "lastAccessed": 1779295621216,
+      "type": "file"
+    },
+    {
+      "path": "docs\\05-harness\\validation.md",
+      "accessCount": 18,
+      "lastAccessed": 1779295499711,
       "type": "file"
     },
     {
       "path": "backend\\src\\utils\\dateUtil.ts",
-      "accessCount": 8,
-      "lastAccessed": 1779290930029,
+      "accessCount": 10,
+      "lastAccessed": 1779294115662,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\app.ts",
+      "accessCount": 10,
+      "lastAccessed": 1779294870114,
+      "type": "file"
+    },
+    {
+      "path": "backend\\package.json",
+      "accessCount": 9,
+      "lastAccessed": 1779291665379,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\utils\\jwt.ts",
+      "accessCount": 7,
+      "lastAccessed": 1779291697107,
       "type": "file"
     },
     {
@@ -138,9 +162,27 @@
       "type": "directory"
     },
     {
-      "path": "backend\\src\\utils\\jwt.ts",
+      "path": "backend\\src\\services\\plan.service.ts",
       "accessCount": 6,
-      "lastAccessed": 1779289934243,
+      "lastAccessed": 1779294846045,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src",
+      "accessCount": 6,
+      "lastAccessed": 1779295016582,
+      "type": "directory"
+    },
+    {
+      "path": "backend\\src\\repositories\\plan.repository.ts",
+      "accessCount": 5,
+      "lastAccessed": 1779294846469,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\schemas\\plan.schema.ts",
+      "accessCount": 5,
+      "lastAccessed": 1779294853920,
       "type": "file"
     },
     {
@@ -150,15 +192,15 @@
       "type": "file"
     },
     {
-      "path": "backend\\src",
+      "path": "docs\\04-design\\backend-spec.md",
       "accessCount": 4,
-      "lastAccessed": 1779288832814,
-      "type": "directory"
+      "lastAccessed": 1779291677213,
+      "type": "file"
     },
     {
-      "path": "docs\\05-harness\\validation.md",
-      "accessCount": 3,
-      "lastAccessed": 1779287922495,
+      "path": "backend\\src\\controllers\\plan.controller.ts",
+      "accessCount": 4,
+      "lastAccessed": 1779294839920,
       "type": "file"
     },
     {
@@ -174,10 +216,70 @@
       "type": "file"
     },
     {
-      "path": "docs\\05-harness\\harness.md",
-      "accessCount": 2,
-      "lastAccessed": 1779286169463,
+      "path": "backend\\src\\controllers\\auth.controller.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779291636512,
       "type": "file"
+    },
+    {
+      "path": "backend\\src\\services\\auth.service.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779291636792,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\repositories\\user.repository.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779291636900,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\authMiddleware.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779291641966,
+      "type": "file"
+    },
+    {
+      "path": "backend\\tests\\integration\\auth.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779291657408,
+      "type": "file"
+    },
+    {
+      "path": "docs\\05-harness\\harness.md",
+      "accessCount": 3,
+      "lastAccessed": 1779292756113,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\utils\\errors.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779294114312,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\types\\api.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779294115193,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\config\\prisma.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779294116484,
+      "type": "file"
+    },
+    {
+      "path": "backend\\src\\middlewares\\validate.ts",
+      "accessCount": 3,
+      "lastAccessed": 1779294117280,
+      "type": "file"
+    },
+    {
+      "path": "backend",
+      "accessCount": 3,
+      "lastAccessed": 1779294859244,
+      "type": "directory"
     },
     {
       "path": "backend\\eslint.config.mjs",
@@ -186,51 +288,45 @@
       "type": "file"
     },
     {
-      "path": "docs\\04-design\\api-spec.md",
+      "path": "backend\\src\\routes\\auth.route.ts",
       "accessCount": 2,
-      "lastAccessed": 1779287922089,
+      "lastAccessed": 1779291636366,
       "type": "file"
     },
     {
-      "path": "backend\\src\\app.ts",
+      "path": "backend\\src\\schemas\\auth.schema.ts",
       "accessCount": 2,
-      "lastAccessed": 1779287935848,
+      "lastAccessed": 1779291641547,
       "type": "file"
     },
     {
-      "path": "backend\\src\\middlewares\\authMiddleware.ts",
+      "path": "backend\\tests\\setup\\testEnv.ts",
       "accessCount": 2,
-      "lastAccessed": 1779287948652,
+      "lastAccessed": 1779291657794,
       "type": "file"
     },
     {
-      "path": "backend",
+      "path": "backend\\tests\\setup\\globalSetup.ts",
       "accessCount": 2,
-      "lastAccessed": 1779288833493,
-      "type": "directory"
-    },
-    {
-      "path": "backend\\src\\services\\auth.service.ts",
-      "accessCount": 2,
-      "lastAccessed": 1779288977679,
+      "lastAccessed": 1779291658371,
       "type": "file"
     },
     {
-      "path": "backend\\tests\\integration\\auth.test.ts",
+      "path": "backend\\src\\types\\express.d.ts",
       "accessCount": 2,
-      "lastAccessed": 1779288977987,
+      "lastAccessed": 1779291669925,
       "type": "file"
     },
     {
-      "path": "backend\\src\\controllers\\auth.controller.ts",
+      "path": "backend\\src\\middlewares\\errorHandler.ts",
       "accessCount": 2,
-      "lastAccessed": 1779288988357,
+      "lastAccessed": 1779291696867,
       "type": "file"
     },
     {
-      "path": "backend\\src\\repositories\\user.repository.ts",
+      "path": "backend\\prisma\\schema.prisma",
       "accessCount": 2,
-      "lastAccessed": 1779288999996,
+      "lastAccessed": 1779294123657,
       "type": "file"
     },
     {
@@ -246,21 +342,9 @@
       "type": "file"
     },
     {
-      "path": "docs\\04-design\\backend-spec.md",
-      "accessCount": 1,
-      "lastAccessed": 1779286170394,
-      "type": "file"
-    },
-    {
       "path": "backend\\tsconfig.json",
       "accessCount": 1,
       "lastAccessed": 1779286180043,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\config\\prisma.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779286186698,
       "type": "file"
     },
     {
@@ -276,39 +360,9 @@
       "type": "file"
     },
     {
-      "path": "backend\\src\\utils\\errors.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779286219500,
-      "type": "file"
-    },
-    {
       "path": "backend\\src\\config\\env.ts",
       "accessCount": 1,
       "lastAccessed": 1779286236377,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\types\\express.d.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779286244720,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\types\\api.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779286256782,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\middlewares\\errorHandler.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779286306527,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\middlewares\\validate.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779286317207,
       "type": "file"
     },
     {
@@ -357,30 +411,6 @@
       "path": "backend\\tests\\unit\\middlewares\\authMiddleware.test.ts",
       "accessCount": 1,
       "lastAccessed": 1779286467006,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\routes\\auth.route.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779287929017,
-      "type": "file"
-    },
-    {
-      "path": "backend\\src\\schemas\\auth.schema.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779287935285,
-      "type": "file"
-    },
-    {
-      "path": "backend\\tests\\setup\\globalSetup.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779287998647,
-      "type": "file"
-    },
-    {
-      "path": "backend\\tests\\setup\\testEnv.ts",
-      "accessCount": 1,
-      "lastAccessed": 1779287999210,
       "type": "file"
     }
   ],

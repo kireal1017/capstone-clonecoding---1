@@ -369,7 +369,7 @@ Content-Type: application/json
 | `due_date` | string | ✓ | `YYYY-MM-DD` 형식 |
 | `due_time` | string\|null | 선택 | `HH:mm` 형식 또는 null |
 | `display_date` | string | ✓ | `YYYY-MM-DD` 형식 |
-| `category_id` | integer | ✓ | 요청자 소유 카테고리 ID |
+| `category_id` | integer\|null | 선택 | 요청자 소유 카테고리 ID 또는 null (미분류 허용, K-09=B) |
 | `priority` | string | ✓ | `high` / `normal` / `low` |
 | `memo` | string\|null | 선택 | 0~500자 |
 | `is_remind` | boolean | 선택 | 기본값 `false` |
@@ -447,8 +447,7 @@ Content-Type: application/json
 
 | 코드 | HTTP | 조건 |
 |---|---|---|
-| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 삭제된 일정 |
-| `AUTH_FORBIDDEN` | 403 | 타인 소유 일정 |
+| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 삭제된 일정 (타인 소유 포함 — 정보 비노출 정책) |
 | `AUTH_UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
@@ -490,8 +489,7 @@ Content-Type: application/json
 
 | 코드 | HTTP | 조건 |
 |---|---|---|
-| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 삭제된 일정 |
-| `AUTH_FORBIDDEN` | 403 | 타인 소유 일정 |
+| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 삭제된 일정 (타인 소유 포함 — 정보 비노출 정책) |
 | `VALIDATION_FAILED` | 422 | 형식 검증 실패 |
 | `CATEGORY_NOT_FOUND` | 404 | 유효하지 않은 category_id |
 
@@ -506,25 +504,19 @@ Content-Type: application/json
 
 **요청 본문:** 없음
 
-**응답 (200 OK)**
+**응답 (204 No Content)**
 
-```json
-{
-  "success": true,
-  "data": {
-    "message": "삭제 완료"
-  }
-}
-```
+본문 없음.
 
 - 서버 처리: `deleted_at = NOW(KST)` UPDATE (물리 삭제 아님) [PRD 확정]
+- validation.md §8-3 기준: 204 No Content 확정 (api-spec 이전 표기 200+message에서 정정)
 
 **에러 응답**
 
 | 코드 | HTTP | 조건 |
 |---|---|---|
-| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 이미 삭제된 일정 |
-| `AUTH_FORBIDDEN` | 403 | 타인 소유 일정 |
+| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 이미 삭제된 일정 (타인 소유 포함 — 정보 비노출 정책) |
+| `AUTH_UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
 
@@ -556,8 +548,8 @@ Content-Type: application/json
 
 | 코드 | HTTP | 조건 |
 |---|---|---|
-| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 삭제된 일정 |
-| `AUTH_FORBIDDEN` | 403 | 타인 소유 일정 |
+| `PLAN_NOT_FOUND` | 404 | 존재하지 않거나 삭제된 일정 (타인 소유 포함 — 정보 비노출 정책) |
+| `AUTH_UNAUTHORIZED` | 401 | 토큰 없음 또는 만료 |
 
 ---
 
@@ -677,8 +669,7 @@ Content-Type: application/json
 
 | 코드 | HTTP | 조건 |
 |---|---|---|
-| `CATEGORY_NOT_FOUND` | 404 | 존재하지 않는 카테고리 |
-| `AUTH_FORBIDDEN` | 403 | 타인 소유 카테고리 |
+| `CATEGORY_NOT_FOUND` | 404 | 존재하지 않는 카테고리 또는 타인 소유 카테고리 (존재 자체를 숨김 — 정보 비노출 정책) |
 | `VALIDATION_FAILED` | 422 | 형식 검증 실패 |
 | `CATEGORY_NAME_ALREADY_EXISTS` | 409 | 동일 사용자 내 중복 카테고리명 (DB-03) |
 
@@ -710,12 +701,15 @@ Content-Type: application/json
   2. 해당 카테고리를 참조하는 모든 `plans.category_id = NULL` UPDATE
 - `affectedPlans`: NULL 처리된 일정 수 [PRD 확정]
 
+> **일정 vs 카테고리 DELETE 응답 비교:**
+> - `DELETE /api/v1/plans/:id` → `204 No Content` (본문 없음, soft delete만 수행)
+> - `DELETE /api/v1/categories/:id` → `200 OK` + JSON 본문 (연결 일정의 `categoryId`를 NULL로 일괄 처리한 건수 `affectedPlans` 반환이 필요하므로 본문 있음)
+
 **에러 응답**
 
 | 코드 | HTTP | 조건 |
 |---|---|---|
-| `CATEGORY_NOT_FOUND` | 404 | 존재하지 않는 카테고리 |
-| `AUTH_FORBIDDEN` | 403 | 타인 소유 카테고리 |
+| `CATEGORY_NOT_FOUND` | 404 | 존재하지 않는 카테고리 또는 타인 소유 카테고리 (존재 자체를 숨김 — 정보 비노출 정책) |
 
 ---
 
