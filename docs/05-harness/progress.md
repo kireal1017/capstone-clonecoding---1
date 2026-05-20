@@ -27,7 +27,7 @@
 | Step 3 | 백엔드(인증) | 완료 | - | 2026-05-20T23:59:10+09:00 | 37/37 통과 (통합 12 + 단위 25). C안: nowKST Intl 재구현 + jti UUID fix |
 | Step 4 | 백엔드(일정) | 완료 | 2026-05-21 | 2026-05-21T00:55:00+09:00 | 일정 API 6개 + 통합 26건 통과(전체 8파일 63건, 회귀 무). 완료 토글 경로 /complete 확정, 사용자별 격리·타인 404 PLAN_NOT_FOUND. verifier-1 검증: 15/15 PASS (2026-05-21T01:00+09:00). 문서 편차 2건(api-spec §4-5 DELETE 200vs204, §4-2 category_id 필수vs nullable) — 비차단 |
 | Step 5 | 백엔드(카테고리) | 완료 | 2026-05-21 | 2026-05-21T01:30:00+09:00 | 카테고리 API 4개 + 통합 25건 통과(전체 9파일 88건, 회귀 무). 수정=PUT 전체교체 확정, 사용자별 격리·타인 404 CATEGORY_NOT_FOUND, 중복명 409, 삭제 시 Plan.categoryId SetNull(affectedPlans 반환). DELETE 응답 200+{message,affectedPlans}(api-spec §5-4 채택). verifier-1 검증: 19/19 PASS (2026-05-21T01:40:00+09:00). 문서 편차 2건 → doc-fixer-1이 2026-05-21 정정 완료(validation §3-3 204→200, PUT/DELETE 에러표 AUTH_FORBIDDEN→CATEGORY_NOT_FOUND) |
-| Step 6 | 백엔드(프로필) | 미시작 | - | - | - |
+| Step 6 | 백엔드(프로필) | 완료 | 2026-05-21 | 2026-05-21T02:15:00+09:00 | 프로필 API 4개(GET/PATCH/PATCH password/POST avatar) + 통합 19건 통과(전체 10파일 107건, 회귀 무). 본인(req.user.userId)만 접근, 닉네임=PATCH(email 불변), 비번변경=verifyPassword→hashPassword(현재 불일치 401 AUTH_INVALID_CREDENTIALS, refreshTokenHash 미변경=§6-3 정책), 아바타=multer(jpg/png/webp·5MB, 초과 400 FILE_TOO_LARGE·형식 400 INVALID_FILE_TYPE·누락 422), /uploads 정적서빙. typecheck/lint 0. verifier-1 검증: 21/21 PASS (2026-05-21T02:40:00+09:00). 추가점검: bcrypt 20초 타임아웃=환경 보정(단언 손실 없음) PASS. updatedAt 포함=validation §3-4 정합 PASS. |
 | Step 7 | 프론트(골격) | 미시작 | - | - | - |
 | Step 8 | 프론트(인증) | 미시작 | - | - | - |
 | Step 9 | 프론트(메인) | 미시작 | - | - | - |
@@ -751,50 +751,113 @@ cd backend && npm run test  # PASS — 9파일 88건 (categories 25 + plans 26 +
 
 ## Step 6. 프로필 API 4개
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
+- **상태:** 완료
+- **시작:** 2026-05-21
+- **완료:** 2026-05-21T02:15:00+09:00
 - **참조 문서:** api-spec.md §6, backend-spec.md §8-5, screen-flow.md §10, PRD §40 U-06
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 기존 Step 3~5 패턴(route/controller/service/repository/schema) 그대로 따라 profile 계층 4개 엔드포인트 구현.
+- 비밀번호 변경: 스키마에서 newPassword/newPasswordConfirm 일치 검증(불일치 422), 서비스에서 currentPassword를 verifyPassword(bcryptjs)로 검증(불일치 401 AUTH_INVALID_CREDENTIALS) → hashPassword(새 비번) → passwordHash UPDATE. refreshTokenHash는 미변경(api-spec §6-3이 세션 무효화를 요구하지 않으므로 기존 정책 유지).
+- 아바타: `middlewares/upload.ts`에서 multer diskStorage로 `backend/uploads/avatars/{userId}_{timestamp}.{ext}` 저장. fileFilter로 jpg/png/webp만 허용(그 외 400 INVALID_FILE_TYPE), limits.fileSize 5MB(초과 시 multer LIMIT_FILE_SIZE → 400 FILE_TOO_LARGE), 파일 누락 422 VALIDATION_FAILED. app.ts에 `/uploads` express.static 정적 서빙 추가.
+- 프로필 응답에 createdAt·updatedAt 모두 포함(validation.md §3-4 기준).
+- bcryptjs(순수 JS, cost 12)가 OneDrive+한글 경로 환경에서 느려, 비번변경 happy-path 테스트(bcrypt 6회 누적)는 per-test 타임아웃 20초로 설정(단언은 그대로). 테스트 weakening/skip 없음.
 
 ### 변경 파일
 
-(완료 시 채움)
-
-- 예시: `backend/src/routes/profile.route.ts`
-- 예시: `backend/src/controllers/profile.controller.ts`
-- 예시: `backend/src/services/profile.service.ts`
-- 예시: `backend/src/middlewares/upload.ts`
-- 예시: `backend/src/schemas/profile.schema.ts`
-- 예시: `backend/uploads/.gitkeep`
-- 예시: `backend/tests/integration/profile.test.ts`
+- `backend/src/routes/profile.route.ts` (신규)
+- `backend/src/controllers/profile.controller.ts` (신규)
+- `backend/src/services/profile.service.ts` (신규)
+- `backend/src/repositories/profile.repository.ts` (신규)
+- `backend/src/middlewares/upload.ts` (신규, multer)
+- `backend/src/schemas/profile.schema.ts` (신규)
+- `backend/src/app.ts` (profileRouter 마운트 + /uploads 정적 서빙)
+- `backend/uploads/.gitkeep`, `backend/uploads/avatars/.gitkeep` (신규)
+- `.gitignore` (uploads/avatars/ .gitkeep 예외 추가)
+- `backend/tests/integration/profile.test.ts` (신규, 19건)
 
 ### 실행 명령어
 
-(완료 시 채움)
-
-- 예시: `cd backend && npm run test -- profile`
-- 예시: `cd backend && npm run typecheck`
+- 루트: `npm run typecheck` → EXIT 0
+- 루트: `npm run lint` (--max-warnings=0) → EXIT 0
+- `cd backend && npm run test` → 10파일 107건 전부 통과
 
 ### 검증 결과
 
-- [ ] GET /profile → 200, 현재 사용자 정보 반환
-- [ ] PATCH /profile → 200, nickname 수정 + updated_at 갱신 확인
-- [ ] PATCH /profile/password → 200, 현재 비밀번호 검증 통과
-- [ ] PATCH /profile/password (현재 비밀번호 오류) → 401 또는 422
-- [ ] 비밀번호 변경 후 기존 비밀번호 로그인 → 401 AUTH_INVALID_CREDENTIALS
-- [ ] POST /profile/avatar (jpg, 1MB) → 200, avatarUrl 반환, uploads/avatars/ 파일 존재 확인
-- [ ] POST /profile/avatar (5MB 초과) → 400 FILE_TOO_LARGE
-- [ ] POST /profile/avatar (허용 외 형식) → 400 INVALID_FILE_TYPE
-- [ ] supertest 통합 테스트 전체 통과
-- [ ] validation.md §3-4 기준 통과
+- [x] GET /profile → 200, 현재 사용자 정보 반환 (id·email·nickname·avatarUrl·createdAt·updatedAt, 민감필드 미노출)
+- [x] PATCH /profile → 200, nickname 수정 + updatedAt 갱신 확인 (email 불변)
+- [x] PATCH /profile/password → 200, 현재 비밀번호 검증 통과
+- [x] PATCH /profile/password (현재 비밀번호 오류) → 401 AUTH_INVALID_CREDENTIALS
+- [x] 비밀번호 변경 후 기존 비밀번호 로그인 → 401 AUTH_INVALID_CREDENTIALS, 새 비밀번호 로그인 → 200
+- [x] POST /profile/avatar (jpg) → 200, avatarUrl 반환, uploads/avatars/ 파일 존재 확인 + DB 반영
+- [x] POST /profile/avatar (5MB 초과) → 400 FILE_TOO_LARGE
+- [x] POST /profile/avatar (허용 외 형식 gif) → 400 INVALID_FILE_TYPE
+- [x] POST /profile/avatar (파일 누락) → 422 VALIDATION_FAILED
+- [x] 인증 없이 4개 엔드포인트 접근 → 401 AUTH_UNAUTHORIZED
+- [x] supertest 통합 테스트 전체 통과 (19/19)
+- [x] validation.md §3-4 기준 통과
+- [x] 회귀 무: 인증(auth 12) / 일정(plans) / 카테고리(categories) / 단위 테스트 전부 통과 (총 107건)
+
+### 본인 프로필 접근 방식
+
+- 모든 엔드포인트 `router.use(authMiddleware)` → `req.user.userId`로만 조회/수정. 리포지토리 where에 `id: userId` 사용으로 타인 행 미접근. 토큰별 격리 테스트 통과.
+
+### 비밀번호 변경 처리 방식
+
+- verifyPassword(currentPassword, user.passwordHash) → 불일치 시 401 AUTH_INVALID_CREDENTIALS → 일치 시 hashPassword(newPassword) → passwordHash UPDATE(updatedAt nowKST). refreshTokenHash 미변경(§6-3 정책 유지).
 
 ### 남은 문제
 
-- 없음
+- 없음. (참고: bcryptjs 성능 한계로 비번변경 통합 테스트 1건에 per-test 20초 타임아웃 설정 — 환경 제약 대응이며 단언/커버리지 손실 없음.)
+
+---
+
+### Step 6 독립 검증 결과 (verifier-1, 2026-05-21T02:40:00+09:00)
+
+**21개 기준 판정표:**
+
+| # | 기준 | 판정 | 근거 (파일:라인) |
+|---|---|---|---|
+| 1 | 프로필 API 4개만 구현 (PR-01~PR-04) | PASS | profile.route.ts:21~34 — GET/PATCH/PATCH password/POST avatar 정확히 4개 |
+| 2 | 프론트엔드 기능 미구현 | PASS | git status: profile.* 6파일+app.ts+.gitignore 수정만. frontend 미수정 확인 |
+| 3 | 일정/카테고리/인증 API 동작 미변경 (해당 소스 무수정) | PASS | git diff HEAD -- backend/src/routes/auth.route.ts backend/src/routes/plan.route.ts backend/src/routes/category.route.ts: 변경 없음. app.ts는 profileRouter 마운트 + /uploads 정적 서빙 추가만(Step 6 정당 변경) |
+| 4 | 모든 프로필 API에 authMiddleware 적용 | PASS | profile.route.ts:18 `router.use(authMiddleware)` — 4개 전부 커버 |
+| 5 | 모든 프로필 작업이 req.user.userId 기준 본인 데이터만 접근 | PASS | profile.controller.ts:17~21 requireUserId(req) → req.user.userId. profile.repository.ts:12~14 findById where:{id:userId}, :20~28 updateNickname where:{id:userId}, :35~43 updatePasswordHash where:{id:userId}, :46~54 updateAvatarUrl where:{id:userId} — 전 함수 userId 강제 |
+| 6 | GET /profile 응답에 passwordHash/refreshTokenHash 등 민감 필드 미노출 | PASS | profile.service.ts:29~39 toProfileView() — id/email/nickname/avatarUrl/createdAt/updatedAt만 반환, passwordHash·refreshTokenHash 제외. 테스트 profile.test.ts:121~123 `expect(user.passwordHash).toBeUndefined()` + `expect(user.refreshTokenHash).toBeUndefined()` 통과 |
+| 7 | PATCH /profile은 nickname만 수정, email 불변 | PASS | profile.schema.ts:19~25 UpdateProfileSchema — nickname 필드만. profile.repository.ts:24~28 updateNickname data:{nickname, updatedAt}만. 테스트: email 불변 + DB 직접 확인 통과 |
+| 8 | PATCH /profile/password는 현재 비번 검증 후 새 비번 bcryptjs 해싱 저장 | PASS | profile.service.ts:85~90 verifyPassword(currentPassword, user.passwordHash) → 불일치 시 InvalidCredentialsError(401) → 일치 시 hashPassword(newPassword) → updatePasswordHash. 테스트: 새 비번 로그인 200·기존 비번 로그인 401 통과 |
+| 9 | 비번 변경 시 refreshTokenHash 정책이 api-spec.md §6-3과 일치 | PASS | profile.repository.ts:31~33 주석 "refreshTokenHash는 건드리지 않는다 — api-spec.md §6-3은 비밀번호 변경 시 세션 무효화를 요구하지 않으므로". data:{passwordHash, updatedAt}만 UPDATE. api-spec.md §6-3에 세션 무효화 요건 없음 — 정책 일치 |
+| 10 | POST /profile/avatar 허용 이미지 타입만 업로드 가능 | PASS | upload.ts:25~29 ALLOWED_MIME_EXT = {image/jpeg, image/png, image/webp}. fileFilter:60~68 허용 외 → INVALID_FILE_TYPE_CODE 마커 에러. 테스트: gif → 400 INVALID_FILE_TYPE 통과 |
+| 11 | 아바타 크기 제한 + MIME 검증 정상 동작 | PASS | upload.ts:22 MAX_AVATAR_BYTES=5*1024*1024. multer limits:{fileSize}. 테스트: 5MB+1 → 400 FILE_TOO_LARGE, gif → 400 INVALID_FILE_TYPE 양쪽 통과 |
+| 12 | multer 에러 → AppError/표준 에러 응답 변환 | PASS | upload.ts:80~117 uploadAvatar 래퍼 — MulterError LIMIT_FILE_SIZE → BadRequestError('FILE_TOO_LARGE'), INVALID_FILE_TYPE_CODE → BadRequestError('INVALID_FILE_TYPE'), 파일 누락 → ValidationError. errorHandler가 AppError를 표준 응답으로 변환. 테스트 3건 모두 통과 |
+| 13 | 업로드 파일 경로/avatarUrl DB 반영 | PASS | upload.ts:17 AVATAR_DIR=backend/uploads/avatars, :44~54 filename={userId}_{Date.now()}.{ext}. profile.service.ts:106 updateAvatarUrl 호출. 테스트: fs.existsSync(파일경로) + DB avatarUrl 반영 + GET /profile avatarUrl 노출 3중 확인 통과 |
+| 14 | Prisma schema·migration 미수정 | PASS | `git diff HEAD -- backend/prisma/` 출력 없음 — 변경 없음 확인 |
+| 15 | npm run typecheck 통과 | PASS | 실행 결과: frontend+backend 에러 0건 |
+| 16 | npm run lint 통과 | PASS | 실행 결과: frontend+backend 에러/warning 0건 (--max-warnings=0) |
+| 17 | cd backend; npm run test 통과 (통과 수 보고) | PASS | 10파일 107건 전체 통과 (profile 19 + categories 25 + plans 26 + auth 12 + 단위 25) |
+| 18 | auth/plans/categories/profile 테스트 모두 회귀 없이 통과 | PASS | auth 12건·plans 26건·categories 25건·profile 19건·단위 25건 전부 통과, 회귀 없음 |
+| 19 | any/@ts-ignore/.skip/.only 등 금지 패턴 없음 | PASS | backend/src + backend/tests grep(`: any`, `as any`, `<any>`, `@ts-ignore`, `.skip`, `.only`): 0건 |
+| 20 | Step 6 범위 밖 파일 미수정 | PASS | git status: 범위 외 소스 파일 수정 없음. 수정 파일 — app.ts(profileRouter+/uploads 마운트 Step6 정당), .gitignore(uploads/avatars/.gitkeep 예외 추가 Step6 정당), .omc/** (내부 상태 파일, 무관) |
+| 21 | progress.md에 Step 6 결과 기록 | PASS | 기존 작성 완료 + 본 검증 결과 추가 기록 |
+
+**추가 점검 평가:**
+
+(a) **bcrypt happy-path 테스트 20초 타임아웃**
+- profile.test.ts:188에서 `it('성공 시 200, ...', async () => { ... }, 20000)` — per-test 타임아웃만 늘림.
+- 내부 단언(200 응답·새 비번 로그인 200·기존 비번 로그인 401)은 그대로 유지, 커버리지 손실 없음.
+- bcryptjs(순수 JS, cost 12)가 OneDrive+한글 경로 환경에서 register/login/changePassword/재로그인 2회 = bcrypt 연산 6회 누적으로 기본 5초 타임아웃을 초과하는 알려진 환경 제약 대응.
+- `.skip` / `.todo` / 단언 완화 없음. **PASS (환경 보정, 단언/커버리지 손실 없음)**
+
+(b) **응답 updatedAt 포함이 validation §3-4와 정합한지**
+- validation.md §3-4 GET /profile 응답 기댓값: `{ id, email, nickname, avatarUrl, createdAt, updatedAt }` — updatedAt 명시.
+- profile.service.ts:20~38 ProfileView 인터페이스 + toProfileView() 함수: updatedAt 포함.
+- 테스트 profile.test.ts:119 `expect(user.updatedAt).toMatch(/\+09:00$/)` 통과.
+- PATCH /profile 테스트(profile.test.ts:142): 수정 후 응답 updatedAt KST 갱신 확인. **PASS (validation §3-4와 정합)**
+
+**발견된 문제 목록 (수정 금지 — 보고용):**
+
+없음. 21개 기준 전부 PASS, 추가 점검 2건 모두 PASS.
 
 ---
 

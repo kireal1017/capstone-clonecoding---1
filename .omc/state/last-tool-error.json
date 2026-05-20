@@ -1,7 +1,7 @@
 {
   "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"C:\\\\Users\\\\j9077\\\\.claude\\\\projects\\\\C--Users-j9077-OneDrive-------26-1----week12---planmate-omctest\\\\memory\\\\MEMORY.md\"}",
+  "tool_input_preview": "{\"file_path\":\"C:\\\\Users\\\\j9077\\\\OneDrive\\\\바탕 화면\\\\26-1 캡디\\\\week12 - planmate-omctest\\\\backend\\\\tests\\\\setup\\\\setup.ts\"}",
   "error": "File does not exist. Note: your current working directory is C:\\Users\\j9077\\OneDrive\\바탕 화면\\26-1 캡디\\week12 - planmate-omctest.",
-  "timestamp": "2026-05-20T16:05:24.383Z",
+  "timestamp": "2026-05-20T16:56:56.313Z",
   "retry_count": 1
 }

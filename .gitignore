@@ -9,3 +9,5 @@ build
 .DS_Store
 uploads/
 !uploads/.gitkeep
+!uploads/avatars/
+!uploads/avatars/.gitkeep
