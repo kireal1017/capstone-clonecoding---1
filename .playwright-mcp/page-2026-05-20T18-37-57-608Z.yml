@@ -1,0 +1,4 @@
+- generic [ref=e4]:
+  - heading "페이지를 찾을 수 없습니다" [level=1] [ref=e5]
+  - link "홈으로 돌아가기" [ref=e6] [cursor=pointer]:
+    - /url: /

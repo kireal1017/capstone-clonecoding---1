@@ -28,7 +28,7 @@
 | Step 4 | 백엔드(일정) | 완료 | 2026-05-21 | 2026-05-21T00:55:00+09:00 | 일정 API 6개 + 통합 26건 통과(전체 8파일 63건, 회귀 무). 완료 토글 경로 /complete 확정, 사용자별 격리·타인 404 PLAN_NOT_FOUND. verifier-1 검증: 15/15 PASS (2026-05-21T01:00+09:00). 문서 편차 2건(api-spec §4-5 DELETE 200vs204, §4-2 category_id 필수vs nullable) — 비차단 |
 | Step 5 | 백엔드(카테고리) | 완료 | 2026-05-21 | 2026-05-21T01:30:00+09:00 | 카테고리 API 4개 + 통합 25건 통과(전체 9파일 88건, 회귀 무). 수정=PUT 전체교체 확정, 사용자별 격리·타인 404 CATEGORY_NOT_FOUND, 중복명 409, 삭제 시 Plan.categoryId SetNull(affectedPlans 반환). DELETE 응답 200+{message,affectedPlans}(api-spec §5-4 채택). verifier-1 검증: 19/19 PASS (2026-05-21T01:40:00+09:00). 문서 편차 2건 → doc-fixer-1이 2026-05-21 정정 완료(validation §3-3 204→200, PUT/DELETE 에러표 AUTH_FORBIDDEN→CATEGORY_NOT_FOUND) |
 | Step 6 | 백엔드(프로필) | 완료 | 2026-05-21 | 2026-05-21T02:15:00+09:00 | 프로필 API 4개(GET/PATCH/PATCH password/POST avatar) + 통합 19건 통과(전체 10파일 107건, 회귀 무). 본인(req.user.userId)만 접근, 닉네임=PATCH(email 불변), 비번변경=verifyPassword→hashPassword(현재 불일치 401 AUTH_INVALID_CREDENTIALS, refreshTokenHash 미변경=§6-3 정책), 아바타=multer(jpg/png/webp·5MB, 초과 400 FILE_TOO_LARGE·형식 400 INVALID_FILE_TYPE·누락 422), /uploads 정적서빙. typecheck/lint 0. verifier-1 검증: 21/21 PASS (2026-05-21T02:40:00+09:00). 추가점검: bcrypt 20초 타임아웃=환경 보정(단언 손실 없음) PASS. updatedAt 포함=validation §3-4 정합 PASS. |
-| Step 7 | 프론트(골격) | 미시작 | - | - | - |
+| Step 7 | 프론트(골격) | 완료 | 2026-05-21T02:50:00+09:00 | 2026-05-21T03:10:00+09:00 | 라우팅 골격(createBrowserRouter 6경로: /login·/register·/·/tasks/new·/profile·*) + AppShell + ProtectedRoute/PublicOnlyRoute + authStore(placeholder isAuthenticated:true) + httpClient(axios, withCredentials, Bearer 인터셉터, 401 refresh 구조 stub) + api/domain 타입 + 디자인 토큰(tailwind.config 선반영). typecheck/lint 0, vite build 106 modules OK, 백엔드 회귀 10파일 107건 통과. 경로 편차(/register·/tasks/new) 의도적. 2026-05-21 Playwright MCP로 6경로 렌더 검증 완료(전 경로 콘솔 에러 0). 프론트 단위테스트는 Step 8에서 RTL 도입 시 처리 |
 | Step 8 | 프론트(인증) | 미시작 | - | - | - |
 | Step 9 | 프론트(메인) | 미시작 | - | - | - |
 | Step 10 | 프론트(등록/수정) | 미시작 | - | - | - |
@@ -863,50 +863,205 @@ cd backend && npm run test  # PASS — 9파일 88건 (categories 25 + plans 26 +
 
 ## Step 7. 프론트엔드 라우팅 골격 + httpClient
 
-- **상태:** 미시작
-- **시작:** -
-- **완료:** -
-- **참조 문서:** frontend-spec.md §2·§5·§7-1, screen-flow.md §12, design-review.md FE-12
+- **상태:** 완료
+- **시작:** 2026-05-21T02:50:00+09:00
+- **완료:** 2026-05-21T03:10:00+09:00
+- **참조 문서:** frontend-spec.md §2·§5·§7-1, screen-flow.md §12, design-review.md FE-12, design-reference.md(Serene Productivity), api-spec.md §1~§6
+
+### 범위 노트 (본 Step에서 한 것 / 안 한 것)
+
+- **한 것:** 라우팅 골격(createBrowserRouter v6) + 페이지 자리표시자 6종 + AppShell 레이아웃 + 보호/공개 라우트 가드 + authStore(placeholder) + httpClient(axios) + api/domain 타입 스캐폴딩 + 디자인 토큰(tailwind.config.ts).
+- **안 한 것(범위 외, 후속 Step):** 실제 로그인/회원가입 제출 로직(Step 8), 일정 CRUD(Step 9·10), 카테고리 UI(Step 11), 프로필 편집(Step 11), 401 refresh-and-retry 재시도 큐 전체 구현(Step 8). 프론트 단위 테스트는 미작성(사용자 Step 7 검증 범위 외).
 
 ### 작업 노트
 
-(시작 후 시간순으로 한 줄씩 추가)
+- 2026-05-21T02:50+09:00 — 기존 프론트 baseline 확인(main.tsx는 이미 StrictMode로 `<App/>` 렌더 → 무수정, App.tsx만 교체). 새 의존성 추가 없음(react-router-dom·@tanstack/react-query·zustand·axios 기설치).
+- 2026-05-21T02:55+09:00 — `types/api.ts`(ApiSuccessResponse/ApiErrorResponse/ApiResponse/ApiErrorDetail) + `types/domain.ts`(User/Profile/Category/Plan/Priority, camelCase 계약) 작성 — 타입 스캐폴딩만, 화면 미연동.
+- 2026-05-21T02:58+09:00 — `features/auth/stores/authStore.ts`(Zustand): user/accessToken/isAuthenticated + setAuth/clearAuth. **placeholder 기본값 `isAuthenticated: true`** + `// Step 8: replace with real token-based auth; default will become false` 주석. 가드 로직은 정상이라 Step 8에서 기본값만 false로 바꾸면 동작.
+- 2026-05-21T03:00+09:00 — `vite-env.d.ts`에 `ImportMetaEnv.VITE_API_BASE_URL` 타입 보강(기존 `/// <reference types="vite/client" />` 유지·확장).
+- 2026-05-21T03:02+09:00 — `lib/api/httpClient.ts`: axios 인스턴스(baseURL=`import.meta.env.VITE_API_BASE_URL || '/api/v1'`, withCredentials:true). 요청 인터셉터=authStore accessToken→Bearer. 응답 인터셉터=401 감지 시 `refreshAccessToken()`(POST /auth/refresh) 호출 **구조만**, 실패 시 `clearAuth()`. `// Step 8: full 401 refresh-and-retry flow` TODO 명시. `any` 없음 — `unknown` + `axios.isAxiosError` 타입 가드.
+- 2026-05-21T03:04+09:00 — `routes/ProtectedRoute.tsx`(미인증→/login, `state.from`에 진입 위치 보존) / `routes/PublicOnlyRoute.tsx`(인증 시→/) / `components/layout/AppShell.tsx`(헤더: PlanMate 타이틀 + /·/profile 내비 + 로그아웃 버튼[clearAuth만] / main: Outlet).
+- 2026-05-21T03:06+09:00 — 페이지 6종(`pages/LoginPage`·`RegisterPage`·`MainPage`·`PlanCreatePage`·`ProfilePage`·`NotFoundPage`) 자리표시자 + `routes/index.tsx`(createBrowserRouter) + `lib/queryClient.ts` + `App.tsx`(QueryClientProvider+RouterProvider).
+- 2026-05-21T03:08+09:00 — `tailwind.config.ts` theme.extend에 디자인 토큰 선반영(colors 기본 8 + 카테고리 5색, fontFamily Inter, borderRadius default/card/pill, maxWidth.container 800px, spacing.gutter 16px). `tailwind.css`에 `@layer base`로 body 기본 스타일(surface bg, on-surface text, Inter).
+- 2026-05-21T03:10+09:00 — typecheck/lint 0, vite build 106 modules OK, 백엔드 회귀 107건 통과 확인. dist 빌드 산출물 제거. debug 코드(console/debugger/any/@ts-ignore) grep 0건.
 
 ### 변경 파일
 
-(완료 시 채움)
+**생성 (frontend/src):**
+- `types/api.ts` — ApiSuccessResponse<T> / ApiErrorResponse / ApiResponse<T> / ApiErrorDetail
+- `types/domain.ts` — User / Profile / Category / Plan / Priority (camelCase 계약)
+- `features/auth/stores/authStore.ts` — Zustand authStore (placeholder isAuthenticated:true)
+- `lib/api/httpClient.ts` — axios 인스턴스 + Bearer 요청 인터셉터 + 401 refresh 구조 stub + `refreshAccessToken()`
+- `lib/queryClient.ts` — TanStack QueryClient
+- `routes/index.tsx` — createBrowserRouter (6 경로)
+- `routes/ProtectedRoute.tsx` — 보호 라우트 가드
+- `routes/PublicOnlyRoute.tsx` — 공개 전용 라우트 가드
+- `components/layout/AppShell.tsx` — 보호 영역 공통 레이아웃(헤더+main Outlet)
+- `pages/LoginPage.tsx` · `RegisterPage.tsx` · `MainPage.tsx` · `PlanCreatePage.tsx` · `ProfilePage.tsx` · `NotFoundPage.tsx` — 자리표시자 6종
 
-- 예시: `frontend/src/routes/index.tsx`
-- 예시: `frontend/src/routes/ProtectedRoute.tsx`
-- 예시: `frontend/src/lib/api/httpClient.ts`
-- 예시: `frontend/src/features/auth/stores/authStore.ts`
-- 예시: `frontend/src/features/auth/hooks/useAuth.ts`
-- 예시: `frontend/src/components/ui/Spinner.tsx`
-- 예시: `frontend/tests/unit/httpClient.test.ts`
-- 예시: `frontend/tests/unit/authStore.test.ts`
+**수정 (frontend):**
+- `src/App.tsx` — placeholder div → QueryClientProvider + RouterProvider 컴포지션
+- `src/vite-env.d.ts` — ImportMetaEnv.VITE_API_BASE_URL 타입 보강
+- `src/styles/tailwind.css` — `@layer base` body 기본 스타일 추가
+- `tailwind.config.ts` — theme.extend 디자인 토큰 반영 (Tailwind 토큰 자리표시자 항목 해소)
+
+> `src/main.tsx`는 이미 StrictMode로 `<App/>`를 렌더하므로 무수정. 새 npm 의존성 추가 없음.
+
+### 생성된 라우트 목록
+
+| 경로 | 분류 | 가드 | 렌더 |
+|---|---|---|---|
+| `/login` | 공개 | PublicOnlyRoute (인증 시 `/`로) | LoginPage |
+| `/register` | 공개 | PublicOnlyRoute | RegisterPage |
+| `/` | 보호 | ProtectedRoute → AppShell | MainPage (오늘의 일정) |
+| `/tasks/new` | 보호 | ProtectedRoute → AppShell | PlanCreatePage (할 일 등록) |
+| `/profile` | 보호 | ProtectedRoute → AppShell | ProfilePage |
+| `*` | - | - | NotFoundPage |
+
+### AppShell / Layout 구조
+
+- `<div bg-surface text-on-surface min-h-screen>` 루트.
+- 헤더: `border-b border-soft-border`, 내부 `max-w-container(800px)` 중앙 정렬 + `px-gutter`. 좌측 "PlanMate" 타이틀(charcoal), 우측 내비(`/` "오늘의 일정", `/profile` "프로필") + 로그아웃 버튼(`clearAuth`만 호출, API 미연동).
+- `<main max-w-container px-gutter>` 안에서 `<Outlet/>` 렌더.
+- 절제된 스타일: 무거운 그림자/라운드 없음, 1px soft-border로 깊이 표현.
+
+### httpClient 구조
+
+- `axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1', withCredentials: true })`.
+- 요청 인터셉터: authStore.getState().accessToken 존재 시 `Authorization: Bearer <token>` 부착.
+- 응답 인터셉터: `axios.isAxiosError(error) && status===401` → `refreshAccessToken()` 호출(구조만), 실패 시 `authStore.clearAuth()`. 전체 재시도 큐는 `// Step 8: full 401 refresh-and-retry flow` TODO로 명시.
+- `refreshAccessToken()`: `POST /auth/refresh`(refresh 토큰은 httpOnly 쿠키로 자동 전송, JS 미접근). 응답 `{ accessToken }` 반환.
+- 타입 안전: `unknown` + `axios.isAxiosError` 가드, `any`/`@ts-ignore` 0건.
+
+### 디자인 토큰 준비 상태 (Tailwind 토큰 자리표시자 항목 해소)
+
+- colors: charcoal #21201a, surface #f9f9f7, container #eeeeec, on-surface #1a1c1b, outline #7a776e, error #ba1a1a, soft-border #e5e7eb, surface-container-low #f4f4f2 + 카테고리 5색(meeting #7C3AED, assignment #2563EB, exam #DC2626, personal #16A34A, appointment #EA580C).
+- fontFamily.sans: Inter + system-ui 폴백. borderRadius: DEFAULT 0.25rem / card 0.5rem / pill 9999px. maxWidth.container 800px. spacing.gutter 16px.
+- `tailwind.css` `@layer base`로 body에 surface bg / on-surface text / Inter 적용.
 
 ### 실행 명령어
 
-(완료 시 채움)
+```bash
+# 루트: 통합 검증
+npm run typecheck   # PASS — frontend + backend 0 에러
+npm run lint        # PASS — frontend + backend 0 에러·0 warning
 
-- 예시: `cd frontend && npm run test`
-- 예시: `cd frontend && npm run typecheck`
+# frontend: 빌드 스모크 테스트 (렌더 안전성 프록시 — Playwright MCP 미가용)
+cd frontend && node ../node_modules/vite/bin/vite.js build  # PASS — 106 modules, built in ~2.2s
+
+# backend: 회귀 테스트
+cd backend && npm run test  # PASS — 10파일 107건 (회귀 무)
+```
 
 ### 검증 결과
 
-- [ ] 비로그인 상태에서 `/` 접근 → `/login` 리다이렉트 확인
-- [ ] 비로그인 상태에서 `/plans/new` 접근 → `/login` 리다이렉트 확인
-- [ ] 비로그인 상태에서 `/profile` 접근 → `/login` 리다이렉트 확인
-- [ ] 로그인 상태에서 `/login` 접근 → `/` 리다이렉트 확인
-- [ ] httpClient 인터셉터: 401 → refresh 호출 → 원 요청 재시도 단위 테스트 통과
-- [ ] httpClient 인터셉터: refresh 실패 → 강제 로그아웃 + `/login` 리다이렉트 확인
-- [ ] authStore: user·accessToken·isAuthenticated 상태 관리 단위 테스트 통과
-- [ ] `refresh_token` 쿠키 클라이언트 JS 접근 코드 없음 확인 (코드 리뷰)
-- [ ] validation.md §7 기준 통과
+- [x] `npm run typecheck` 통과 (frontend + backend 0 에러)
+- [x] `npm run lint` 통과 (frontend + backend 0 에러·0 warning, `--max-warnings=0`)
+- [x] frontend `vite build` 성공 — 106 modules transformed, 번들/컴파일 에러 0 (Playwright 미가용 → 렌더 안전성 프록시로 사용)
+- [x] backend `npm run test` 통과 — 10파일 107건, Step 0~6 회귀 무영향
+- [x] createBrowserRouter 6경로 구성(/login·/register 공개, /·/tasks/new·/profile 보호, * NotFound)
+- [x] ProtectedRoute: 미인증 시 /login 리다이렉트 + `state.from` 보존 (가드 로직 구현 — placeholder 기본값 isAuthenticated:true라 현재는 통과 진입)
+- [x] PublicOnlyRoute: 인증 시 / 리다이렉트
+- [x] AppShell: 헤더(타이틀+내비+로그아웃) + main Outlet, 디자인 토큰 기반 절제된 스타일
+- [x] httpClient: baseURL+withCredentials+Bearer 인터셉터+401 refresh 구조 stub
+- [x] `refresh_token` 쿠키를 JS에서 읽는 코드 없음 (withCredentials로 브라우저 자동 전송만 — 코드 리뷰 확인)
+- [x] `any`/`@ts-ignore`/console/debugger 0건 (grep 확인)
+- [x] 새 npm 의존성 추가 없음, 백엔드/Prisma/마이그레이션 무수정
+- [x] 디자인 토큰 반영 — "Tailwind 토큰 자리표시자" 전역 항목 해소
+
+### 설계 편차 / 스코프 노트 (의도적, 비차단)
+
+1. **경로 명명 편차** — 사용자가 `/register`·`/tasks/new` 선택(frontend-spec.md는 `/auth`·`/plans/new` 사용). 의도적 채택으로 기록, 문서 정합화는 후속 과제.
+2. **디자인 토큰 선반영** — harness 원안은 Step 9에서 tailwind.config.ts 작성 예정이었으나 사용자 요청으로 Step 7에서 선반영. 전역 "Tailwind 토큰 자리표시자" 항목(Step 0~2 남은 문제 기재분) 해소.
+3. **프론트 단위 테스트 미추가** — 사용자 Step 7 검증 범위에 미포함. harness 원안의 `httpClient.test.ts`·`authStore.test.ts`는 후속 과제로 보류(프론트 테스트 러너 미설치, 추가 안 함).
+4. **Playwright MCP 미가용** — 본 환경에 라우트 렌더 검증용 Playwright 미제공. `vite build`(106 modules 성공)를 렌더 안전성 프록시로 사용.
+5. **authStore 기본값 placeholder** — `isAuthenticated: true`는 골격 탐색용. Step 8에서 실제 토큰 기반 인증 연동 + 기본값 false 전환 예정(가드 로직은 이미 정상).
 
 ### 남은 문제
 
-- 없음
+- 코드/타입/빌드/회귀 기준 차단 이슈 없음 (Step 7 범위 DoD 전체 통과). 후속 과제는 위 "설계 편차/스코프 노트"의 1~5 참조.
+- **[해소됨 2026-05-21] Playwright 라우트 렌더 검증 완료.** 이전 세션에서 미수행 상태였으나, 본 세션에서 Playwright MCP로 6개 라우트(`/login`·`/register`·`/`·`/tasks/new`·`/profile`·존재하지 않는 경로) 실제 브라우저 렌더를 확인 완료 — 전 경로 콘솔 에러 0건, 핵심 요소 정상 표시. 상세는 아래 "Step 7 Playwright 라우트 렌더 검증" 기록 참조. (`vite build` 프록시 → 실제 브라우저 렌더로 보강 완료.)
+- 후속(비차단): 프론트 단위 테스트(`httpClient.test.ts`·`authStore.test.ts`) 미작성 — 프론트 테스트 러너 미설치, Step 8에서 RTL 도입 시 함께 처리 권장.
+
+### 인수인계 메모 (세션 재시작 시점, 2026-05-21)
+
+- **백엔드 Step 0~6 + 프론트 Step 7 = 구현·검증 완료 (Playwright 라우트 렌더 검증까지 포함).** Step 7 작업물은 git 미커밋 상태(작업 트리에 보존, 마지막 커밋은 Step 6 `7e43e93`).
+- **다음 할 일 (1순위):** Step 8(로그인/회원가입) 진행. (Step 7 Playwright 라우트 렌더 검증은 2026-05-21 본 세션에서 완료 — 아래 기록 참조.)
+- Step 7 작업물 git 미커밋 상태이므로 Step 8 착수 전 커밋 정리 여부 결정 권장.
+- Playwright MCP 연결 상태 확인은 `claude mcp list`로 가능.
+
+### 다음 Step에서 해야 할 일 (Step 8 — 로그인/회원가입 페이지)
+
+- authStore 기본값 `isAuthenticated: false`로 전환 + 실제 로그인 성공 시 `setAuth(user, accessToken)` 연동.
+- httpClient 401 refresh-and-retry 전체 흐름 구현(재시도 큐 + 동시 401 중복 refresh 방지).
+- LoginForm/RegisterForm(react-hook-form + zod) + auth API(login/register/logout/refresh) + useLogin/useRegister/useLogout 훅.
+- 로그인 성공 → ProtectedRoute `state.from` 복귀 또는 `/`.
+
+---
+
+### Step 7 독립 검증 결과 (verifier-1, 2026-05-21T03:20:00+09:00)
+
+**판정: PASS (16/16 기준 통과, 차단 0건, 신뢰도 high) — 수정 없이 read-only 재검증.**
+
+| # | 기준 | 판정 | 근거 |
+|---|---|---|---|
+| 1 | createBrowserRouter 6경로(/login·/register·/·/tasks/new·/profile·*) | PASS | routes/index.tsx:22-44 — 정확히 6경로 |
+| 2 | /·/tasks/new·/profile 보호 / /login·/register 공개(인증 시 / 리다이렉트) | PASS | routes/index.tsx:24-42 보호=ProtectedRoute→AppShell, 공개=PublicOnlyRoute. ProtectedRoute.tsx:12-14 미인증→/login(state.from), PublicOnlyRoute.tsx:11-13 인증→/ |
+| 3 | 페이지 자리표시자만, 실제 API 호출 없음 | PASS | 6페이지 모두 정적 JSX("구현 예정"). pages/ 내 httpClient/axios/fetch/useQuery/useMutation grep 0건 |
+| 4 | AppShell 헤더/내비 + main Outlet, 보호 페이지 내부 렌더 | PASS | AppShell.tsx:17-45 header(NavLink /·/profile + 로그아웃), main:40 `<Outlet/>` |
+| 5 | authStore user/accessToken/isAuthenticated + setAuth/clearAuth (기본값 true placeholder 허용) | PASS | authStore.ts:14-28, 기본 isAuthenticated:true + Step 8 주석 |
+| 6 | httpClient baseURL(VITE_API_BASE_URL)+withCredentials+Bearer+401 구조(재시도 루프 미구현) | PASS | httpClient.ts:15-58, unknown+axios.isAxiosError, refreshAccessToken stub, Step 8 TODO |
+| 7 | types/api.ts(success/error/union) + types/domain.ts(User/Plan/Category/Profile/Priority camelCase) | PASS | api.ts:9-28, domain.ts:7-46 |
+| 8 | tailwind.config.ts 디자인 토큰(charcoal/surface/카테고리 5색/Inter/radius/spacing) | PASS | tailwind.config.ts:13-56 |
+| 9 | npm run typecheck → 0 에러 | PASS | 재실행 exit 0 (frontend+backend) |
+| 10 | npm run lint → 0 에러·warning | PASS | 재실행 exit 0 (`--max-warnings=0`) |
+| 11 | backend npm run test 회귀 무 | PASS | 재실행 10파일 107건 통과, 0 실패 |
+| 12 | frontend vite build 성공 | PASS | 재실행 exit 0, 106 modules, built in 1.77s |
+| 13 | frontend/src 내 `: any`/`as any`/`<any>`/`@ts-ignore` 0건 | PASS | grep 0 매치 |
+| 14 | console/debugger 잔류 0건 | PASS | grep 0 매치 |
+| 15 | backend/** 및 prisma/** 무수정 | PASS | `git diff --stat HEAD -- backend/` 출력 없음 |
+| 16 | progress.md Step 7 완료 기록 + 대시보드 갱신 + 편차 명시 | PASS | progress.md Step 7 섹션 + 대시보드 행 + 편차 1~5 기록 |
+
+**비차단 관찰(정보):** authStore 기본값 true로 PublicOnlyRoute가 골격 단계에서 항상 / 리다이렉트(문서화된 의도). 프론트 단위 테스트 부재(Step 7 범위 외, 명시됨). vite build가 렌더 안전성 프록시.
+
+**최종 권고: APPROVE — Step 7 실질 완료.**
+
+---
+
+### Step 7 Playwright 라우트 렌더 검증 (2026-05-21T03:38:00+09:00)
+
+> 이전 세션의 "남은 문제 — Playwright 라우트 렌더 검증 미수행"을 본 세션에서 해소. 코드 무수정, 검증 전용.
+
+**환경:** `cd frontend && node ../node_modules/vite/bin/vite.js --port 5173 --strictPort` → Vite v5.4.21, ready 546ms, http://localhost:5173/ 정상 기동. Playwright MCP로 6개 경로 접근.
+
+**라우트별 결과 (전 경로 콘솔 에러 0건):**
+
+| 접근 경로 | 최종 URL | 렌더 | 콘솔 | 비고 |
+|---|---|---|---|---|
+| `/login` | `/`로 리다이렉트 | AppShell + MainPage | 0 err / 1 warn | PublicOnlyRoute(authStore placeholder isAuthenticated:true) → 의도된 동작 |
+| `/register` | `/`로 리다이렉트 | AppShell + MainPage | 0 err / 1 warn | 동일(공개 라우트 가드) |
+| `/` | `/` | AppShell 헤더(PlanMate·오늘의 일정·프로필·로그아웃) + 캘린더/주간/오늘 region 3종("Step 9 구현 예정") | 0 err / 1 warn | 보호 라우트 정상 진입 |
+| `/tasks/new` | `/tasks/new` | PlanCreatePage(보호) | 0 err / 1 warn | 정상 |
+| `/profile` | `/profile` | ProfilePage(보호) | 0 err / 1 warn | 정상 |
+| 존재하지 않는 경로 | (그대로) | NotFoundPage("페이지를 찾을 수 없습니다" + "홈으로 돌아가기") | 0 err / 1 warn | `*` catch-all 정상 |
+
+**경고 1건 정체:** `React Router Future Flag Warning: ... v7_startTransition` — React Router v6→v7 마이그레이션 안내(정보성), 에러 아님·런타임 영향 없음. (선택적으로 `future: { v7_startTransition: true }` 플래그로 제거 가능 — 비차단, Step 8 이후 정리 권장.)
+
+**7개 검증 항목 종합 (본 세션 재실행):**
+
+| # | 검증 | 결과 | 근거 |
+|---|---|---|---|
+| 1 | `npm run typecheck` | PASS | exit 0 (frontend + backend) |
+| 2 | `npm run lint` | PASS | exit 0 (`--max-warnings=0`, frontend + backend) |
+| 3 | `cd backend && npm run test` | PASS | 10파일 107건 통과, exit 0, 0 실패 (duration 66.29s) |
+| 4 | 프론트 dev 서버 실행 가능 | PASS | Vite ready 546ms, 5173 listen |
+| 5 | 주요 라우트 런타임 에러 없이 렌더 | PASS | 6경로 전부 콘솔 에러 0건 (위 표) |
+| 6 | httpClient 타입 검증 | PASS | typecheck 0 + 코드: `unknown`+`axios.isAxiosError` 가드, `VITE_API_BASE_URL`+`withCredentials:true`, `: any`/`@ts-ignore` 0건 |
+| 7 | 백엔드 회귀 테스트 | PASS | Step 0~6 = 10파일 107건 동일 통과(회귀 무), backend/**·prisma/** 무수정 |
+
+**준수 확인(요청 제약):** 로그인/회원가입 제출·일정 CRUD·카테고리 UI·프로필 수정 기능 미구현(자리표시자 유지). 백엔드/Prisma 무수정. docs는 progress.md만 수정. `any`/`@ts-ignore` 0건. 테스트 스킵/완화 0건. Step 0~6 동작 무손상.
+
+**판정: Step 7 최종 완료 (PASS) — Playwright 라우트 렌더 검증까지 포함하여 DoD 전체 충족.**
 
 ---
 

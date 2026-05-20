@@ -19,7 +19,7 @@
   },
   "build": {
     "buildCommand": null,
-    "testCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\" && node ../node_modules/vitest/vitest.mjs run tests/integration/profile.test.ts 2>&1 | grep -v \"ms - \" | tail -45; echo \"EXIT=${PIPESTATUS[0]}\"",
+    "testCommand": "cd \"C:/Users/j9077/OneDrive/바탕 화면/26-1 캡디/week12 - planmate-omctest/backend\" && node ../node_modules/vitest/vitest.mjs run 2>&1 | tail -40; echo \"BACKEND_TEST_EXIT=${PIPESTATUS[0]}\"",
     "lintCommand": "npm run lint",
     "devCommand": null,
     "scripts": {
@@ -115,8 +115,8 @@
   "hotPaths": [
     {
       "path": "docs\\05-harness\\progress.md",
-      "accessCount": 55,
-      "lastAccessed": 1779298305647,
+      "accessCount": 78,
+      "lastAccessed": 1779302421643,
       "type": "file"
     },
     {
@@ -127,14 +127,14 @@
     },
     {
       "path": "docs\\05-harness\\validation.md",
-      "accessCount": 21,
-      "lastAccessed": 1779297855191,
+      "accessCount": 22,
+      "lastAccessed": 1779299447795,
       "type": "file"
     },
     {
       "path": "backend\\src\\app.ts",
-      "accessCount": 14,
-      "lastAccessed": 1779297880112,
+      "accessCount": 15,
+      "lastAccessed": 1779298974935,
       "type": "file"
     },
     {
@@ -150,6 +150,12 @@
       "type": "file"
     },
     {
+      "path": "",
+      "accessCount": 9,
+      "lastAccessed": 1779298991441,
+      "type": "directory"
+    },
+    {
       "path": "backend\\src\\utils\\jwt.ts",
       "accessCount": 7,
       "lastAccessed": 1779291697107,
@@ -162,15 +168,15 @@
       "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 6,
-      "lastAccessed": 1779287995701,
-      "type": "directory"
-    },
-    {
       "path": "backend\\src\\services\\plan.service.ts",
       "accessCount": 6,
       "lastAccessed": 1779294846045,
+      "type": "file"
+    },
+    {
+      "path": "docs\\05-harness\\harness.md",
+      "accessCount": 6,
+      "lastAccessed": 1779301941074,
       "type": "file"
     },
     {
@@ -270,12 +276,6 @@
       "type": "file"
     },
     {
-      "path": "docs\\05-harness\\harness.md",
-      "accessCount": 3,
-      "lastAccessed": 1779292756113,
-      "type": "file"
-    },
-    {
       "path": "backend",
       "accessCount": 3,
       "lastAccessed": 1779294859244,
@@ -337,14 +337,14 @@
     },
     {
       "path": "docs\\03-prd\\prd.md",
-      "accessCount": 1,
-      "lastAccessed": 1779285844546,
+      "accessCount": 2,
+      "lastAccessed": 1779299492832,
       "type": "file"
     },
     {
       "path": "package.json",
-      "accessCount": 1,
-      "lastAccessed": 1779286092067,
+      "accessCount": 2,
+      "lastAccessed": 1779300005820,
       "type": "file"
     },
     {
