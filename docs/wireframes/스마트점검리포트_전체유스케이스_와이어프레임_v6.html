@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시공업자 UX 개선 와이어프레임 · 스마트 점검 리포트</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: #f4f5f7;
+      color: #111827;
+    }
+    .page { padding: 32px; }
+    .header, .section, .note { max-width: 1260px; margin: 0 auto; }
+    .header { margin-bottom: 30px; }
+    h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: -0.04em; }
+    .header p { margin: 0; color: #5b6472; line-height: 1.75; font-size: 15px; }
+
+    .section { margin-bottom: 46px; }
+    .section-title {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+    .section-desc {
+      margin: -4px 0 18px;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .badge.blue { background: #dbeafe; color: #1d4ed8; }
+    .badge.purple { background: #ede9fe; color: #6d28d9; }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.amber { background: #fef3c7; color: #92400e; }
+
+    .flow-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin: 20px auto 34px;
+      max-width: 1260px;
+    }
+    .flow-step {
+      position: relative;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(15,23,42,.06);
+    }
+    .flow-step strong { display: block; font-size: 14px; margin-bottom: 6px; }
+    .flow-step span { color: #6b7280; font-size: 12px; line-height: 1.55; }
+    .flow-step.blue { border-color: #bfdbfe; background: #eff6ff; }
+    .flow-step.purple { border-color: #ddd6fe; background: #faf5ff; }
+    .flow-step.green { border-color: #bbf7d0; background: #f0fdf4; }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+    .wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .label { width: 280px; font-size: 14px; font-weight: 900; color: #374151; }
+    .label.blue { color: #1d4ed8; }
+    .label.purple { color: #6d28d9; }
+
+    .phone {
+      width: 280px;
+      min-height: 620px;
+      border: 2px solid #111827;
+      border-radius: 30px;
+      background: #fff;
+      box-shadow: 0 18px 42px rgba(15,23,42,.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .phone.blue { border-color: #2563eb; }
+    .phone.purple { border-color: #7c3aed; }
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 72px;
+      height: 6px;
+      border-radius: 999px;
+      background: #111827;
+      z-index: 5;
+    }
+    .screen {
+      min-height: 620px;
+      padding: 28px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 6px 0 4px;
+    }
+    .top h2 { font-size: 16px; margin: 0; letter-spacing: -0.03em; }
+    .tiny { font-size: 11px; color: #6b7280; line-height: 1.45; }
+    .tiny strong { color: #111827; }
+
+    .progress {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-top: -4px;
+    }
+    .bar {
+      height: 5px;
+      border-radius: 999px;
+      background: #e5e7eb;
+    }
+    .bar.on { background: #111827; }
+    .bar.blue { background: #2563eb; }
+    .bar.purple { background: #7c3aed; }
+
+    .card {
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+    }
+    .card.fill { background: #f9fafb; }
+    .card.blue { border-color: #bfdbfe; background: #eff6ff; }
+    .card.purple { border-color: #ddd6fe; background: #faf5ff; }
+    .card.green { border-color: #bbf7d0; background: #f0fdf4; }
+    .card.amber { border-color: #fde68a; background: #fffbeb; }
+    .card.red { border-color: #fecaca; background: #fef2f2; }
+    .card-title { font-size: 13px; font-weight: 900; margin-bottom: 8px; }
+    .guide-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      min-height: 42px;
+      border-radius: 12px;
+      border: 1px solid #111827;
+      background: #111827;
+      color: #fff;
+      font-weight: 900;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0 10px;
+    }
+    .btn.sub { background: #fff; color: #111827; }
+    .btn.light { background: #f3f4f6; color: #111827; border-color: #d1d5db; }
+    .btn.blue { background: #2563eb; border-color: #2563eb; }
+    .btn.purple { background: #7c3aed; border-color: #7c3aed; }
+    .btn.green { background: #16a34a; border-color: #16a34a; }
+
+    .tagrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .tag {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+    .tag.dark { background: #111827; color: #fff; border-color: #111827; }
+    .tag.blue { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .tag.purple { background: #ede9fe; color: #6d28d9; border-color: #ddd6fe; }
+    .tag.green { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .tag.red { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .tag.amber { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+
+    .grid { display: grid; gap: 10px; }
+    .mode, .room, .field-card {
+      border: 1px solid #d1d5db;
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+      position: relative;
+    }
+    .mode strong, .room strong, .field-card strong { display: block; font-size: 14px; margin-bottom: 5px; }
+    .mode span, .room span, .field-card span { font-size: 12px; color: #6b7280; line-height: 1.45; }
+    .mode.selected, .room.selected, .field-card.selected { border-color: #111827; background: #f9fafb; }
+    .mode.selected::after, .room.selected::after, .field-card.selected::after {
+      content: "✓";
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #111827;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+    .field label { font-size: 11px; font-weight: 900; color: #6b7280; }
+    .input {
+      min-height: 34px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #f9fafb;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.35;
+      display: flex;
+      align-items: center;
+    }
+    .input.area { min-height: 76px; align-items: flex-start; }
+
+    .mini { display: grid; gap: 6px; }
+    .minirow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 6px;
+      font-size: 12px;
+    }
+    .minirow:last-child { border-bottom: 0; padding-bottom: 0; }
+    .check {
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 8px;
+    }
+    .checkhead {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .statusrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .status {
+      min-height: 28px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #f9fafb;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .status.on { background: #111827; color: #fff; border-color: #111827; }
+    .status.blue { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .status.purple { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+
+    .photo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .box {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 1px dashed #9ca3af;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #6b7280;
+    }
+    .box.filled { border-style: solid; background: linear-gradient(135deg,#e5e7eb,#f9fafb); }
+    .box.need { background: #faf5ff; border-color: #7c3aed; color: #7c3aed; }
+
+    .action-card {
+      display: grid;
+      gap: 8px;
+      border: 1px solid #ddd6fe;
+      background: #faf5ff;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #ede9fe;
+    }
+    .action-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .mini-btn {
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .mini-btn.light { background: #fff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+    .actions { margin-top: 12px; display: grid; gap: 8px; }
+    .spacer { flex: 1; min-height: 12px; }
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 8px;
+      margin-top: 12px;
+    }
+    .navitem { text-align: center; font-size: 10px; color: #6b7280; }
+    .navitem strong { display: block; font-size: 16px; color: #111827; margin-bottom: 2px; }
+
+    .note {
+      border: 1px solid #d1d5db;
+      border-radius: 16px;
+      background: #fff;
+      padding: 18px;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+    .note strong { color: #111827; }
+
+    @media(max-width:720px){
+      .page{padding:20px 14px}
+      h1{font-size:24px}
+      .row{grid-template-columns:1fr}
+    }
+  
+.report-stage{display:grid;gap:22px;justify-items:center}
+.report-page{width:min(820px,100%);min-height:980px;background:#fff;border:1px solid #d1d5db;border-radius:4px;box-shadow:0 18px 42px rgba(15,23,42,.12);padding:42px;display:flex;flex-direction:column;gap:18px}
+.report-kicker{font-size:12px;font-weight:900;color:#6b7280;letter-spacing:.08em}
+.report-main-title{font-size:34px;line-height:1.15;letter-spacing:-.04em;font-weight:900;margin:8px 0}
+.report-subtitle{font-size:14px;color:#4b5563;line-height:1.7;max-width:640px}
+.report-info-grid{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid #d1d5db;border-radius:16px;overflow:hidden}
+.report-info-cell{min-height:64px;padding:14px 16px;border-right:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb}
+.report-info-cell:nth-child(2n){border-right:0}.report-info-cell:nth-last-child(-n+2){border-bottom:0}
+.report-info-cell span{display:block;font-size:11px;color:#6b7280;font-weight:900;margin-bottom:6px}.report-info-cell strong{display:block;font-size:14px;line-height:1.45}
+.report-section-title{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-bottom:10px;border-bottom:2px solid #111827;font-size:18px;font-weight:900}
+.report-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.report-summary-box{border:1px solid #d1d5db;border-radius:14px;padding:16px;background:#f9fafb}.report-summary-box span{display:block;color:#6b7280;font-size:11px;font-weight:900;margin-bottom:8px}.report-summary-box strong{font-size:23px}
+.report-table{width:100%;border-collapse:collapse;border:1px solid #d1d5db;border-radius:14px;overflow:hidden;font-size:13px}.report-table th,.report-table td{border-bottom:1px solid #e5e7eb;padding:12px;text-align:left;vertical-align:top;line-height:1.55}.report-table th{background:#f3f4f6;color:#374151;font-size:12px;font-weight:900}.report-table tr:last-child td{border-bottom:0}
+.report-photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.report-photo-card{border:1px solid #d1d5db;border-radius:14px;overflow:hidden;background:#fff}.report-photo-box{height:180px;background:linear-gradient(135deg,#e5e7eb,#f9fafb);display:flex;align-items:center;justify-content:center;font-size:38px;color:#9ca3af;border-bottom:1px solid #e5e7eb}.report-photo-caption{padding:12px;font-size:12px;line-height:1.55;color:#4b5563}
+.report-opinion{border:1px solid #d1d5db;border-radius:14px;padding:16px;background:#f9fafb;font-size:13px;line-height:1.8;color:#374151}.report-footer{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid #e5e7eb;font-size:11px;color:#6b7280}
+.compare-split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare-box{border:1px solid #d1d5db;border-radius:12px;padding:10px;background:#f9fafb}
+@media(max-width:720px){.report-page{padding:24px;min-height:auto}.report-main-title{font-size:28px}.report-info-grid,.report-summary-grid,.report-photo-grid,.compare-split{grid-template-columns:1fr}.report-info-cell,.report-info-cell:nth-child(2n),.report-info-cell:nth-last-child(-n+2){border-right:0;border-bottom:1px solid #e5e7eb}.report-info-cell:last-child{border-bottom:0}}
+
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="header">
+    <h1>시공업자 UX 개선 와이어프레임</h1>
+    <p>
+      기존 흐름을 더 이해하기 쉽게 줄인 버전입니다. 사용자는 어려운 내부 용어를 보지 않고
+      <strong>점검 목적 선택 → 점검 방식 자동 분기 → 필요한 항목만 입력 → AI가 행동 카드로 보조 → 제출</strong> 흐름으로 진행합니다.
+    </p>
+  </header>
+
+  <div class="flow-map">
+    <div class="flow-step"><strong>1. 점검 시작</strong><span>홈에서 새 점검을 시작하거나 작성 중 작업을 이어갑니다.</span></div>
+    <div class="flow-step"><strong>2. 점검 목적 선택</strong><span>입주 전, 정기, 퇴거, 긴급, 수리 점검 중 선택합니다.</span></div>
+    <div class="flow-step blue"><strong>3A. 전체 점검</strong><span>입주 전·정기점검은 공간별로 빠르게 확인합니다.</span></div>
+    <div class="flow-step purple"><strong>3B. 문제 항목 점검</strong><span>퇴거·긴급·수리점검은 특정 문제를 깊게 기록합니다.</span></div>
+    <div class="flow-step green"><strong>4. AI 점검 도우미</strong><span>사진 추가, 자료 확인, 의견 초안 등 다음 행동을 안내합니다.</span></div>
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">공통 시작 화면 <span class="badge">시공업자 실제 UI</span></h2>
+    <p class="section-desc">사용자는 “전체 기록형/문제 집중형” 같은 내부 용어를 보지 않습니다. 점검 목적만 선택하면 시스템이 자동으로 다음 화면을 나눕니다.</p>
+    <div class="row">
+      <div class="wrap">
+        <div class="label">01 · 시공업자 홈</div>
+        <div class="phone"><div class="screen">
+          <div class="top"><h2>현장 점검</h2><span class="tiny">시공업자</span></div>
+          <div class="card fill">
+            <div class="card-title">오늘 할 일</div>
+            <div class="minirow"><span>작성 중</span><strong>1건</strong></div>
+            <div class="minirow"><span>제출 대기</span><strong>1건</strong></div>
+          </div>
+          <div class="btn">+ 새 점검 시작</div>
+          <div class="card blue">
+            <div class="guide-title"><div class="card-title" style="margin:0">작성 중 점검</div><span class="tag blue">입주 전</span></div>
+            <div class="tiny">노원 ○○아파트 1203호 · 거실 창호 기준 사진 필요</div>
+          </div>
+          <div class="card purple">
+            <div class="guide-title"><div class="card-title" style="margin:0">제출 대기</div><span class="tag purple">긴급</span></div>
+            <div class="tiny">강남 ○○빌라 201호 · 욕실 세면대 누수</div>
+          </div>
+          <div class="spacer"></div>
+          <div class="nav"><div class="navitem"><strong>⌂</strong>홈</div><div class="navitem"><strong>＋</strong>점검</div><div class="navitem"><strong>▣</strong>기록</div></div>
+        </div></div>
+      </div>
+
+      <div class="wrap">
+        <div class="label">02 · 점검 목적 선택</div>
+        <div class="phone"><div class="screen">
+          <div class="top"><h2>어떤 점검인가요?</h2><span class="tiny">1/4</span></div>
+          <div class="progress"><div class="bar on"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+          <div class="grid">
+            <div class="mode selected"><strong>입주 전 점검</strong><span>입주 전 집 상태를 기준 자료로 남깁니다.</span></div>
+            <div class="mode"><strong>정기 점검</strong><span>노후화나 이상 징후를 주기적으로 확인합니다.</span></div>
+            <div class="mode"><strong>퇴거 전 점검</strong><span>퇴거 전에 문제 항목을 미리 확인합니다.</span></div>
+            <div class="mode"><strong>퇴거 후 점검</strong><span>입주 전 기록과 비교할 상태를 남깁니다.</span></div>
+            <div class="mode"><strong>긴급 점검</strong><span>누수, 정전, 파손 등 즉시 조치 상황을 기록합니다.</span></div>
+            <div class="mode"><strong>수리 전/후 점검</strong><span>수리 범위와 완료 상태를 확인합니다.</span></div>
+          </div>
+          <div class="actions"><div class="btn">다음</div></div>
+        </div></div>
+      </div>
+
+      <div class="wrap">
+        <div class="label">03 · 점검 대상 입력</div>
+        <div class="phone"><div class="screen">
+          <div class="top"><h2>점검 대상</h2><span class="tiny">2/4</span></div>
+          <div class="progress"><div class="bar on"></div><div class="bar on"></div><div class="bar"></div><div class="bar"></div></div>
+          <div class="card fill">
+            <div class="minirow"><span>선택한 점검</span><span class="tag blue">입주 전 점검</span></div>
+            <div class="minirow"><span>진행 방식</span><strong>집 전체 빠른 확인</strong></div>
+          </div>
+          <div class="field"><label>건물명</label><div class="input">노원 ○○아파트</div></div>
+          <div class="field"><label>호실</label><div class="input">1203호</div></div>
+          <div class="field"><label>점검일</label><div class="input">2026.05.29</div></div>
+          <div class="field"><label>임대인 / 임차인</label><div class="input">김임대 / 박임차</div></div>
+          <div class="actions"><div class="btn">점검 시작</div><div class="btn sub">임시 저장</div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">A. 입주 전·정기점검 흐름 <span class="badge blue">전체 점검</span></h2>
+    <p class="section-desc">현장 동선에 맞게 공간별로 먼저 확인합니다. 모든 항목을 자세히 쓰지 않고, 문제가 있는 항목만 상세 기록합니다.</p>
+    <div class="row">
+      <div class="wrap">
+        <div class="label blue">A-01 · 공간별 빠른 확인</div>
+        <div class="phone blue"><div class="screen">
+          <div class="top"><h2>전체 점검</h2><span class="tiny">3/4</span></div>
+          <div class="progress"><div class="bar on blue"></div><div class="bar on blue"></div><div class="bar on blue"></div><div class="bar"></div></div>
+          <div class="card blue"><div class="card-title">공간별로 빠르게 확인하세요</div><div class="tiny">정상은 빠르게 넘기고, 주의·수리 필요 항목만 자세히 기록합니다.</div></div>
+          <div class="check"><div class="checkhead"><span>현관</span><span class="tiny">도어락·문틀</span></div><div class="statusrow"><div class="status on">정상</div><div class="status">주의</div><div class="status">수리</div></div></div>
+          <div class="check"><div class="checkhead"><span>거실</span><span class="tiny">벽지·바닥·창호</span></div><div class="statusrow"><div class="status">정상</div><div class="status on">주의</div><div class="status">수리</div></div></div>
+          <div class="check"><div class="checkhead"><span>주방</span><span class="tiny">싱크대·후드·배수</span></div><div class="statusrow"><div class="status on">정상</div><div class="status">주의</div><div class="status">수리</div></div></div>
+          <div class="check"><div class="checkhead"><span>욕실</span><span class="tiny">수전·변기·배수</span></div><div class="statusrow"><div class="status">정상</div><div class="status on">주의</div><div class="status">수리</div></div></div>
+          <div class="check"><div class="checkhead"><span>안방</span><span class="tiny">벽지·창호·콘센트</span></div><div class="statusrow"><div class="status on">정상</div><div class="status">주의</div><div class="status">수리</div></div></div>
+          <div class="actions"><div class="btn blue">주의 항목만 자세히 기록</div></div>
+        </div></div>
+      </div>
+
+      <div class="wrap">
+        <div class="label blue">A-02 · 이상 항목 상세 기록</div>
+        <div class="phone blue"><div class="screen">
+          <div class="top"><h2>주의 항목</h2><span class="tiny">거실</span></div>
+          <div class="progress"><div class="bar on blue"></div><div class="bar on blue"></div><div class="bar on blue"></div><div class="bar"></div></div>
+          <div class="card fill">
+            <div class="minirow"><span>공간</span><strong>거실</strong></div>
+            <div class="minirow"><span>항목</span><span class="tag blue">창호</span></div>
+          </div>
+          <div class="field"><label>위치</label><div class="input">거실 창문 하부</div></div>
+          <div class="field"><label>상태 설명</label><div class="input area">실리콘 일부 들뜸 및 방충망 하단부 찢어짐 확인</div></div>
+          <div class="action-card">
+            <div class="guide-title"><div class="card-title" style="margin:0">AI 점검 도우미</div><span class="tag blue">입주 전 기준</span></div>
+            <div class="action-row"><span>전체 위치 사진을 남기면 퇴거 시 비교가 쉬워집니다.</span><span class="mini-btn">촬영</span></div>
+            <div class="action-row"><span>문제 부위 근접 사진이 필요합니다.</span><span class="mini-btn">촬영</span></div>
+            <div class="action-row"><span>크기 기준 사진을 추가하면 더 명확합니다.</span><span class="mini-btn light">선택</span></div>
+          </div>
+          <div class="photo"><div class="box filled">▧</div><div class="box filled">▧</div><div class="box need">＋</div></div>
+          <div class="actions"><div class="btn blue">검토 화면으로</div></div>
+        </div></div>
+      </div>
+
+      <div class="wrap">
+        <div class="label blue">A-03 · 전체 점검 검토</div>
+        <div class="phone blue"><div class="screen">
+          <div class="top"><h2>제출 전 검토</h2><span class="tiny">4/4</span></div>
+          <div class="progress"><div class="bar on blue"></div><div class="bar on blue"></div><div class="bar on blue"></div><div class="bar on blue"></div></div>
+          <div class="card fill"><div class="card-title">입주 전 점검 요약</div><div class="minirow"><span>확인 공간</span><strong>5개</strong></div><div class="minirow"><span>상세 기록</span><strong>2건</strong></div><div class="minirow"><span>사진</span><strong>3장</strong></div></div>
+          <div class="card blue"><div class="card-title">AI 의견 초안</div><div class="tiny">입주 전 기준 상태로 거실 창호와 욕실 일부 주의 항목이 확인됩니다. 향후 퇴거 점검 시 동일 위치와 비교가 필요합니다.</div></div>
+          <div class="field"><label>시공업자 최종 의견</label><div class="input area">AI 초안을 검토 후 현장 판단에 맞게 수정 입력</div></div>
+          <div class="actions"><div class="btn blue">점검 제출</div><div class="btn sub">수정하기</div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">B. 퇴거·긴급·수리점검 흐름 <span class="badge purple">문제 항목 점검</span></h2>
+    <p class="section-desc">기존에는 여러 화면으로 나뉘던 “문제 입력”과 “관찰 흔적 체크”를 하나의 화면으로 합쳤습니다. AI 가이드는 읽는 설명이 아니라 바로 행동할 수 있는 카드로 보여줍니다.</p>
+    <div class="row">
+      <div class="wrap">
+        <div class="label purple">B-01 · 문제 정보 + 현장 확인</div>
+        <div class="phone purple"><div class="screen">
+          <div class="top"><h2>문제 항목 점검</h2><span class="tiny">3/5</span></div>
+          <div class="progress"><div class="bar on purple"></div><div class="bar on purple"></div><div class="bar on purple"></div><div class="bar"></div></div>
+          <div class="card purple"><div class="card-title">예시: 퇴거 전 · 누수</div><div class="tiny">책임을 단정하지 않고 현장에서 확인 가능한 내용만 기록합니다.</div></div>
+          <div class="field"><label>분야 / 항목</label><div class="input">설비·배관 / 누수 확인</div></div>
+          <div class="field"><label>위치</label><div class="input">욕실 세면대 하부</div></div>
+          <div class="field"><label>증상 설명</label><div class="input area">물방울 맺힘, 하부장 내부 젖음, 바닥 물고임 확인</div></div>
+          <div class="card fill">
+            <div class="card-title">현장 확인 항목</div>
+            <div class="minirow"><span>외부 충격 흔적</span><span class="tag">확인 필요</span></div>
+            <div class="minirow"><span>부식·노후 흔적</span><span class="tag amber">있음</span></div>
+            <div class="minirow"><span>연결부 이상</span><span class="tag">확인 필요</span></div>
+            <div class="minirow"><span>이전 수리 이력</span><span class="tag">확인 필요</span></div>
+          </div>
+          <div class="actions"><div class="btn purple">AI 점검 도우미 보기</div></div>
+        </div></div>
+      </div>
+
+      <div class="wrap">
+        <div class="label purple">B-02 · AI 행동 가이드</div>
+        <div class="phone purple"><div class="screen">
+          <div class="top"><h2>AI 점검 도우미</h2><span class="tiny">4/5</span></div>
+          <div class="progress"><div class="bar on purple"></div><div class="bar on purple"></div><div class="bar on purple"></div><div class="bar"></div></div>
+          <div class="action-card">
+            <div class="guide-title"><div class="card-title" style="margin:0">다음 행동</div><span class="tag purple">누수</span></div>
+            <div class="action-row"><span>배관 연결부 근접 사진이 필요합니다.</span><span class="mini-btn">촬영</span></div>
+            <div class="action-row"><span>바닥 물고임 사진을 추가하세요.</span><span class="mini-btn">촬영</span></div>
+            <div class="action-row"><span>입주 전 동일 위치 기록을 확인하세요.</span><span class="mini-btn light">확인</span></div>
+            <div class="action-row"><span>이전 수리·신고 기록이 있는지 확인하세요.</span><span class="mini-btn light">확인</span></div>
+          </div>
+          <div class="card red"><div class="card-title">표현 주의</div><div class="tiny">“임차인 고의”, “임대인 책임”으로 단정하지 않고 “추가 확인 필요”로 기록합니다.</div></div>
+          <div class="photo"><div class="box filled">▧</div><div class="box filled">▧</div><div class="box need">＋</div><div class="box need">＋</div><div class="box">＋</div><div class="box">＋</div></div>
+          <div class="actions"><div class="btn purple">전문 의견 작성</div></div>
+        </div></div>
+      </div>
+
+      <div class="wrap">
+        <div class="label purple">B-03 · 전문 의견 작성</div>
+        <div class="phone purple"><div class="screen">
+          <div class="top"><h2>전문 의견</h2><span class="tiny">5/5</span></div>
+          <div class="progress"><div class="bar on purple"></div><div class="bar on purple"></div><div class="bar on purple"></div><div class="bar on purple"></div></div>
+          <div class="card purple"><div class="card-title">AI 초안</div><div class="tiny">욕실 세면대 하부 배관 연결부 주변에서 누수 흔적이 확인됩니다. 부식 흔적이 일부 관찰되며, 정확한 원인 확인을 위해 이전 수리 이력과 입주 전 기록 확인이 필요합니다. 현재 상태 기준으로 임시 차수 및 설비 점검이 필요합니다.</div></div>
+          <div class="field"><label>시공업자 최종 의견</label><div class="input area">AI 초안을 참고하여 현장 확인 결과에 맞게 수정합니다.</div></div>
+          <div class="card fill"><div class="card-title">제출 전 요약</div><div class="minirow"><span>상황 설명</span><span class="tag green">완료</span></div><div class="minirow"><span>현장 확인</span><span class="tag green">완료</span></div><div class="minirow"><span>사진</span><span class="tag amber">4/5</span></div><div class="minirow"><span>의견</span><span class="tag green">완료</span></div></div>
+          <div class="actions"><div class="btn purple">점검 제출</div><div class="btn sub">수정하기</div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="section">
+    <h2 class="section-title">임대인 유스케이스 <span class="badge green">확인 · 비교 · 공유</span></h2>
+    <p class="section-desc">임대인은 여러 호실의 리포트를 확인하고, 같은 호실의 이전 리포트와 비교하며, PDF 저장과 공유 링크 복사를 수행합니다.</p>
+    <div class="row">
+      <div class="wrap"><div class="label">임대인 01 · 통합 리포트 목록</div><div class="phone"><div class="screen">
+        <div class="top"><h2>임대인 리포트</h2><span class="tiny">전체 호실</span></div>
+        <div class="card fill"><div class="card-title">보유 호실 리포트</div><div class="minirow"><span>호실</span><strong>3개</strong></div><div class="minirow"><span>새 리포트</span><strong>2건</strong></div></div>
+        <div class="tagrow"><span class="tag dark">전체</span><span class="tag">1203호</span><span class="tag">201호</span><span class="tag">입주 전</span><span class="tag">긴급</span></div>
+        <div class="card blue"><div class="guide-title"><div class="card-title" style="margin:0">입주 전 점검 리포트</div><span class="tag blue">확인 전</span></div><div class="tiny">노원 ○○아파트 1203호 · 전체 점검 · 2026.05.29</div><div class="tagrow"><span class="tag">상세 2건</span><span class="tag">사진 3장</span></div></div>
+        <div class="card purple"><div class="guide-title"><div class="card-title" style="margin:0">긴급 누수 점검 리포트</div><span class="tag red">확인 필요</span></div><div class="tiny">강남 ○○빌라 201호 · 욕실 세면대 하부</div><div class="tagrow"><span class="tag purple">설비·배관</span><span class="tag">사진 4장</span></div></div>
+        <div class="card"><div class="guide-title"><div class="card-title" style="margin:0">정기 점검 리포트</div><span class="tag green">확인 완료</span></div><div class="tiny">노원 ○○아파트 1203호 · 2026.03.18</div></div>
+        <div class="spacer"></div><div class="nav"><div class="navitem"><strong>▣</strong>목록</div><div class="navitem"><strong>⌕</strong>필터</div><div class="navitem"><strong>↔</strong>비교</div></div>
+      </div></div></div>
+
+      <div class="wrap"><div class="label">임대인 02 · 리포트 상세 확인</div><div class="phone"><div class="screen">
+        <div class="top"><h2>리포트 상세</h2><span class="tiny">임대인</span></div>
+        <div class="card fill"><div class="guide-title"><div class="card-title" style="margin:0">긴급 누수 점검</div><span class="tag purple">설비·배관</span></div><div class="tiny">강남 ○○빌라 201호 · 욕실 세면대 하부</div></div>
+        <div class="card"><div class="card-title">점검 요약</div><div class="minirow"><span>상태</span><span class="tag red">수리 필요</span></div><div class="minirow"><span>긴급성</span><span class="tag amber">임시 조치 권장</span></div><div class="minirow"><span>추가 확인</span><span class="tag">수리 이력 확인</span></div></div>
+        <div class="photo"><div class="box filled">▧</div><div class="box filled">▧</div><div class="box filled">▧</div></div>
+        <div class="card purple"><div class="card-title">시공업자 의견</div><div class="tiny">누수 흔적이 확인되며, 정확한 원인 확인을 위해 이전 수리 이력과 입주 전 기록 확인이 필요합니다.</div></div>
+        <div class="actions"><div class="btn green">확인 완료</div><div class="btn sub">PDF 내보내기</div><div class="btn light">공유 링크 복사</div></div>
+      </div></div></div>
+
+      <div class="wrap"><div class="label">임대인 03 · 리포트 비교</div><div class="phone"><div class="screen">
+        <div class="top"><h2>리포트 비교</h2><span class="tiny">1203호</span></div>
+        <div class="card green"><div class="card-title">같은 호실의 이전/현재 기록 비교</div><div class="tiny">자동 책임 판단 없이 사진과 기록을 함께 보여줍니다.</div></div>
+        <div class="compare-split">
+          <div class="compare-box"><div class="card-title">이전 기록</div><div class="tiny">2026.03.18 · 정기</div><div class="tagrow"><span class="tag">거실 창호</span><span class="tag green">정상</span></div><div class="photo" style="margin-top:8px"><div class="box filled">▧</div></div></div>
+          <div class="compare-box"><div class="card-title">현재 기록</div><div class="tiny">2026.05.29 · 입주 전</div><div class="tagrow"><span class="tag">거실 창호</span><span class="tag amber">주의</span></div><div class="photo" style="margin-top:8px"><div class="box filled">▧</div></div></div>
+        </div>
+        <div class="actions"><div class="btn green">비교 PDF 저장</div><div class="btn sub">목록으로</div></div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">임차인 유스케이스 <span class="badge blue">본인 호실 확인 · 의견 남기기</span></h2>
+    <p class="section-desc">임차인은 본인이 거주하는 호실의 리포트만 확인하고, 필요 시 본인 의견이나 추가 확인 요청을 남깁니다.</p>
+    <div class="row">
+      <div class="wrap"><div class="label blue">임차인 01 · 내 호실 리포트</div><div class="phone blue"><div class="screen">
+        <div class="top"><h2>내 호실 리포트</h2><span class="tiny">1203호</span></div>
+        <div class="card fill"><div class="card-title">노원 ○○아파트 1203호</div><div class="tiny">확인 가능한 리포트 목록입니다.</div></div>
+        <div class="card blue"><div class="guide-title"><div class="card-title" style="margin:0">입주 전 점검</div><span class="tag blue">확인 요청</span></div><div class="tiny">2026.05.29 · 전체 점검 · 사진 3장</div></div>
+        <div class="card"><div class="guide-title"><div class="card-title" style="margin:0">정기 점검</div><span class="tag green">확인 완료</span></div><div class="tiny">2026.03.18 · 거실/욕실 상태 확인</div></div>
+        <div class="card purple"><div class="guide-title"><div class="card-title" style="margin:0">수리 후 점검</div><span class="tag">참고</span></div><div class="tiny">샷시 보수 완료 확인 · 2026.02.02</div></div>
+        <div class="spacer"></div><div class="nav"><div class="navitem"><strong>▣</strong>리포트</div><div class="navitem"><strong>✓</strong>확인</div><div class="navitem"><strong>↗</strong>공유</div></div>
+      </div></div></div>
+
+      <div class="wrap"><div class="label blue">임차인 02 · 리포트 상세 확인</div><div class="phone blue"><div class="screen">
+        <div class="top"><h2>리포트 상세</h2><span class="tiny">임차인</span></div>
+        <div class="card fill"><div class="guide-title"><div class="card-title" style="margin:0">입주 전 점검</div><span class="tag blue">전체 점검</span></div><div class="tiny">노원 ○○아파트 1203호 · 2026.05.29</div></div>
+        <div class="card"><div class="card-title">확인 항목</div><div class="minirow"><span>거실 창호</span><span class="tag amber">주의</span></div><div class="minirow"><span>욕실 수전</span><span class="tag amber">주의</span></div><div class="minirow"><span>주방 배수</span><span class="tag green">정상</span></div></div>
+        <div class="photo"><div class="box filled">▧</div><div class="box filled">▧</div><div class="box filled">▧</div></div>
+        <div class="card blue"><div class="card-title">시공업자 의견</div><div class="tiny">입주 전 기준 상태로 거실 창호와 욕실 일부 주의 항목이 확인됩니다.</div></div>
+        <div class="actions"><div class="btn blue">확인 완료</div><div class="btn sub">의견 남기기</div><div class="btn light">PDF 저장</div></div>
+      </div></div></div>
+
+      <div class="wrap"><div class="label blue">임차인 03 · 의견 남기기</div><div class="phone blue"><div class="screen">
+        <div class="top"><h2>내 의견</h2><span class="tiny">선택 입력</span></div>
+        <div class="card blue"><div class="card-title">임차인 확인 의견</div><div class="tiny">리포트 확인 전 간단한 의견을 남길 수 있습니다.</div></div>
+        <div class="field"><label>의견 유형</label><div class="input">기존 상태로 확인 / 추가 확인 요청 / 이견 있음</div></div>
+        <div class="field"><label>의견 내용</label><div class="input area">거실 창호 하단 방충망 찢어짐은 입주 전부터 확인된 상태입니다.</div></div>
+        <div class="photo"><div class="box filled">▧</div><div class="box">＋</div><div class="box">＋</div></div>
+        <div class="actions"><div class="btn blue">의견 저장 후 확인 완료</div><div class="btn sub">취소</div></div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">공유 링크 접근 유스케이스 <span class="badge amber">외부 확인</span></h2>
+    <div class="row">
+      <div class="wrap"><div class="label">공유 01 · 링크로 리포트 보기</div><div class="phone"><div class="screen">
+        <div class="top"><h2>공유 리포트</h2><span class="tiny">Link</span></div>
+        <div class="card fill"><div class="guide-title"><div class="card-title" style="margin:0">스마트 점검 리포트</div><span class="tag amber">공유 링크</span></div><div class="tiny">노원 ○○아파트 1203호 · 입주 전 점검</div></div>
+        <div class="card"><div class="card-title">조회 가능 정보</div><div class="minirow"><span>점검 대상</span><strong>1203호</strong></div><div class="minirow"><span>점검 유형</span><span class="tag blue">입주 전</span></div><div class="minirow"><span>사진 자료</span><strong>3장</strong></div><div class="minirow"><span>전문 의견</span><span class="tag green">포함</span></div></div>
+        <div class="card amber"><div class="card-title">접근 안내</div><div class="tiny">1차 구현에서는 링크를 알고 있으면 리포트에 접근할 수 있습니다.</div></div>
+        <div class="actions"><div class="btn">리포트 전체 보기</div><div class="btn sub">PDF 저장</div></div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">리포트 양식 <span class="badge green">웹 · PDF 공통 템플릿</span></h2>
+    <p class="section-desc">점검 결과를 임대인과 임차인이 같은 기준으로 확인할 수 있도록 구성한 리포트 예시입니다.</p>
+    <div class="report-stage">
+      <article class="report-page">
+        <div><div class="report-kicker">SMART INSPECTION REPORT</div><div class="report-main-title">스마트 점검 리포트</div><p class="report-subtitle">점검 목적, 점검 대상, 참여자, 주요 결과를 한 페이지에서 확인할 수 있도록 구성한 표지입니다.</p><div class="tagrow"><span class="tag blue">입주 전 점검</span><span class="tag dark">전체 점검</span><span class="tag green">생성 완료</span></div></div>
+        <div class="report-info-grid">
+          <div class="report-info-cell"><span>점검 대상</span><strong>노원 ○○아파트 1203호</strong></div><div class="report-info-cell"><span>주소</span><strong>서울시 노원구 ○○로 00</strong></div><div class="report-info-cell"><span>점검일</span><strong>2026.05.29</strong></div><div class="report-info-cell"><span>생성일</span><strong>2026.05.29</strong></div><div class="report-info-cell"><span>시공업자</span><strong>이시공</strong></div><div class="report-info-cell"><span>임대인 / 임차인</span><strong>김임대 / 박임차</strong></div>
+        </div>
+        <div class="report-footer"><span>HTML Template · PDF Export</span><span>1 / 4</span></div>
+      </article>
+
+      <article class="report-page">
+        <div class="report-section-title"><span>1. 점검 요약</span><span class="tag blue">입주 전 기준 상태</span></div>
+        <div class="report-summary-grid"><div class="report-summary-box"><span>확인 공간</span><strong>5개</strong></div><div class="report-summary-box"><span>상세 기록</span><strong>2건</strong></div><div class="report-summary-box"><span>사진 자료</span><strong>3장</strong></div><div class="report-summary-box"><span>추가 확인</span><strong>1건</strong></div></div>
+        <div class="report-section-title"><span>2. 체크리스트 결과</span></div>
+        <table class="report-table"><thead><tr><th>공간</th><th>항목</th><th>상태</th><th>위치</th><th>설명</th></tr></thead><tbody><tr><td>거실</td><td>창호</td><td>주의</td><td>거실 창문 하부</td><td>실리콘 일부 들뜸 및 방충망 하단부 찢어짐 확인</td></tr><tr><td>욕실</td><td>수전</td><td>주의</td><td>세면대 수전</td><td>수전 주변 물때 및 경미한 흔들림 확인</td></tr><tr><td>주방</td><td>배수</td><td>정상</td><td>싱크대 하부</td><td>특이사항 없음</td></tr></tbody></table>
+        <div class="report-opinion"><strong>시공업자 종합 의견</strong><br>입주 전 기준 상태로 거실 창호와 욕실 수전 일부 주의 항목이 확인됩니다. 향후 퇴거 점검 시 동일 위치와 비교가 필요합니다.</div>
+        <div class="report-footer"><span>확인 완료 버튼과 공유 버튼은 PDF에 포함하지 않습니다.</span><span>2 / 4</span></div>
+      </article>
+
+      <article class="report-page">
+        <div class="report-section-title"><span>3. 사진 증빙</span><span class="tag dark">항목별 연결</span></div>
+        <div class="report-photo-grid">
+          <div class="report-photo-card"><div class="report-photo-box">▧</div><div class="report-photo-caption"><strong>사진 1 · 거실 창호 전체</strong><br>거실 창문 하부 위치가 보이는 전체 사진입니다.</div></div>
+          <div class="report-photo-card"><div class="report-photo-box">▧</div><div class="report-photo-caption"><strong>사진 2 · 방충망 근접</strong><br>방충망 하단부 찢어짐을 근접 촬영한 사진입니다.</div></div>
+          <div class="report-photo-card"><div class="report-photo-box">▧</div><div class="report-photo-caption"><strong>사진 3 · 욕실 수전</strong><br>수전 주변 상태와 흔들림 확인 위치를 기록한 사진입니다.</div></div>
+          <div class="report-photo-card"><div class="report-photo-box">＋</div><div class="report-photo-caption"><strong>추가 권장 사진</strong><br>크기 기준이 포함된 사진을 추가하면 향후 비교에 도움이 됩니다.</div></div>
+        </div>
+        <div class="report-footer"><span>사진은 체크리스트 항목과 연결되어 표시됩니다.</span><span>3 / 4</span></div>
+      </article>
+
+      <article class="report-page">
+        <div class="report-section-title"><span>4. 확인 및 이력 정보</span><span class="tag green">웹 관리</span></div>
+        <div class="report-info-grid">
+          <div class="report-info-cell"><span>리포트 상태</span><strong>생성 완료</strong></div><div class="report-info-cell"><span>공개 범위</span><strong>시공업자, 임대인, 임차인</strong></div><div class="report-info-cell"><span>임대인 확인</span><strong>확인 전</strong></div><div class="report-info-cell"><span>임차인 확인</span><strong>확인 전</strong></div><div class="report-info-cell"><span>공유 링크</span><strong>생성 가능</strong></div><div class="report-info-cell"><span>누적 기준</span><strong>호실 기준 리포트 목록</strong></div>
+        </div>
+        <div class="report-opinion"><strong>주의 문구</strong><br>본 리포트는 점검 당시의 시설 상태와 사진 증빙을 기록하기 위한 자료입니다. 법적 책임 소재나 비용 부담을 단정하지 않으며, 필요한 경우 계약서, 이전 기록, 수리 내역 등 추가 자료와 함께 확인해야 합니다.</div>
+        <div class="report-footer"><span>Web Report · Printable PDF</span><span>4 / 4</span></div>
+      </article>
+    </div>
+  </section>
+
+
+  <div class="note">
+    <strong>최종 구성:</strong>
+    시공업자, 임대인, 임차인, 공유 링크 접근, 웹/PDF 리포트 양식을 하나의 와이어프레임에 붙였습니다. 시공업자는 점검 작성, 임대인은 확인·비교·공유, 임차인은 본인 호실 확인·의견 남기기, 리포트는 표지·요약·사진·확인 이력 구조로 연결됩니다.
+  </div>
+</main>
+</body>
+</html>

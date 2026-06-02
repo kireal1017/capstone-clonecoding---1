@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.local
+dist/
+.vite/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+.DS_Store
+.vscode/
+.idea/
+*.log
+.cache/
+coverage/
+
+# Tooling / agent state (not part of the project deliverable)
+.claude/
+.omc/
+.playwright-mcp/
+
+# Local test artifacts (screenshots, etc.)
+mobile-home.jpeg
+mobile-issue-flow.jpeg
+tablet-compare.jpeg
